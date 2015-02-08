@@ -4,8 +4,75 @@
   <link rel="stylesheet" type="text/css" href="/styles.css">
   <script src='https://cdn.firebase.com/js/client/2.0.4/firebase.js'></script>
   <script src="firebase.js"></script>
+  <style>
+    .center {
+      text-align: center;
+      font-size: 24pt;
+      position: relative;
+      top: 50%;
+      -webkit-transform: translateY(-50%);
+      -ms-transform: translateY(-50%);
+      transform: translateY(-50%);
+    }
+    .reqdiv {
+      margin-left: auto;
+      margin-right: auto;
+      width: 50%;
+      padding: 10px;
+      border-radius: 25px;
+      background-color: #444;
+    }
+    .reqtitle {
+      text-align: left;
+      font-weight: bold;
+      font-size: 24pt;
+      margin: 5px;
+    }
+    .reqdesc {
+      text-align: left;
+      font-weight: normal;
+      font-size: 12pt;
+      margin: 5px;
+    }
+    .contenth {
+      text-align: center;
+      font-weight: normal;
+      font-size: 20pt;
+      margin: 5px;
+    }
+    #header {
+      height: 60px;
+      background-color: #444;
+      margin: 0px;
+    }
+    #content {
+      height: 500px;
+      background-color: #555;
+      margin: 0px;
+      padding: 20px;
+      text-align: center;
+    }
+    #page {
+      width: 100%;
+    }
+    body, td, tr, table {
+      padding: 0px;
+      margin: 0px;
+      font-family: sans-serif;
+    }
+  </style>
  </head>
- <body>
-  <p>test</p>
- </body>
+ <body><table id="page"><tr><td>
+  <div id="header">
+   
+  </div>
+  </td></tr><tr><td>
+  <div id="content">
+   <p class="contenth">Current requests:</p>
+   <br>
+   <div id="list">
+    <p class="center">Loading…</p>
+   </div>
+  </div>
+ </td></tr></table></body>
 </html>
