@@ -1,3 +1,9 @@
 body {
-	background-color: #444;
+  background-color: #444;
+  color: #DDD;
+  font-family: sans-serif;
+}
+
+a {
+  color: #AAD;
 }
