@@ -17,10 +17,10 @@ window.addEventListener('load', function(e) {try{
   canvas = document.getElementById('c');
   gl = canvas.getContext('experimental-webgl');
   initGL();
-  requestAnimationFrame(drawFrame);
   canvas.addEventListener("touchstart", touchStart, false);
   canvas.addEventListener("touchmove", touchMove, false);
   canvas.addEventListener("touchend", touchEnd, false);
+  requestAnimationFrame(drawFrame);
 }catch(e){alert("onload: "+e.message)}}, false);
 
 var fovy = 45;
@@ -43,7 +43,7 @@ function touchMove(event) {
   var touches = event.changedTouches;
   for (var i=0;i<touches.length;i++) {
     if (touches[i].identifier==camPanTouch) {
-      camY += (touches[i].pageX-lastCTX)/canvas.height*fovy*0.03;
+      camY -= (touches[i].pageX-lastCTX)/canvas.height*fovy*0.03;
       camP += (touches[i].pageY-lastCTY)/canvas.height*fovy*0.03;
       lastCTX = touches[i].pageX;
       lastCTY = touches[i].pageY;
@@ -130,6 +130,13 @@ function onResize() {
   gl.uniformMatrix4fv(shader.projectionLoc, false, projection);
 }
 
+var mvStack = [];
+function pushMV() {
+  mvStack.push(mat4.clone(modelView));
+}
+function popMV() {
+  modelView = mvStack.pop();
+}
 function setModelView() {
   gl.uniformMatrix4fv(shader.modelViewLoc, false, modelView);
 }
@@ -171,15 +178,15 @@ function unpackM(m) {
 function negX(v) {var c=vec3.clone(v);c[0]*=-1;return c}
 function negY(v) {var c=vec3.clone(v);c[1]*=-1;return c}
 
-var tenks = [
+var tenkTypes = [
 {
   name: "Toger I",
   model: {
-    body: [trans(boxr(1.7,1.0,3.1,[0,1,0]),0,1.0,0)],
-    turret: function(p1,p2,p3,c){
+    body: [trans(boxr(1.7,0.8,3.1,[0,1,0]),0,1.0,0)],
+    turret: [trans(function(p1,p2,p3,c){
       var p4=negX(p2),p5=negX(p1);
       var m1=negY(p1),m2=negY(p2),m3=negY(p3),m4=negY(p4),m5=negY(p5);
-      return[quad(p2,p1,m1,m2,c),quad(p3,p2,m2,m3,c),quad(p4,p3,m3,m4,c),quad(p5,p4,m4,m5,c),quad(p1,p5,m5,m1,c),tri(p1,p3,p2,c),tri(p1,p4,p3,c),tri(p1,p5,p4,c),tri(m1,m2,m3,c),tri(m1,m3,m4,c),tri(m1,m4,m5,c)]}([0.5,0.5,-1],[0.7,0.5,0.5],[0,0.5,0.7],[0,1,0]),
+      return[quad(p2,p1,m1,m2,c),quad(p3,p2,m2,m3,c),quad(p4,p3,m3,m4,c),quad(p5,p4,m4,m5,c),quad(p1,p5,m5,m1,c),tri(p1,p3,p2,c),tri(p1,p4,p3,c),tri(p1,p5,p4,c),tri(m1,m2,m3,c),tri(m1,m3,m4,c),tri(m1,m4,m5,c)]}([0.8,0.6,-1],[1.0,0.6,0.5],[0,0.6,1.0],[0,1,0]),0,2.1,0)]
   }
 },
 {
@@ -192,8 +199,8 @@ var tenks = [
 ];
 
 function initBuffers() {
-  for (var i in tenks) {
-    var t = tenks[i];
+  for (var i in tenkTypes) {
+    var t = tenkTypes[i];
     initBuffer(t.model.body);
     initBuffer(t.model.turret);
   }
@@ -213,7 +220,7 @@ function drawBuffer(model) {
   gl.drawArrays(gl.TRIANGLES, 0, model.numVerts);
 }
 
-var camY = camP = 0;
+var camY=0, camP=-0.5;
 var t = 0;
 var lastTime = null;
 function drawFrame(time) {try{
@@ -229,13 +236,14 @@ function drawFrame(time) {try{
   //mat4.lookAt(modelView, [10,10,10], [y,0,0], [0,1,0]);
   mat4.identity(modelView);
   mat4.rotateX(modelView,modelView, -camP);
-  mat4.rotateY(modelView,modelView, -camY);
-  gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,-1]),mat4.rotateY([],mat4.identity([]), -t)));
+  mat4.rotateY(modelView,modelView, camY);
+  gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,1]),mat4.rotateY([],mat4.identity([]), -t)));
   mat4.translate(modelView,modelView, [0,-10,-17]);
   mat4.rotateY(modelView,modelView, t);
   setModelView();
   
-  drawBuffer(tenks[0].model.turret);
+  drawBuffer(tenkTypes[0].model.body);
+  drawBuffer(tenkTypes[0].model.turret);
   
   var err = gl.getError();
   if (err==0) requestAnimationFrame(drawFrame);
