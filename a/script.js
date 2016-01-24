@@ -37,6 +37,7 @@ function touchStart(event) {
       lastCTY = touches[i].pageY;
     }
   }
+  rot = true;
 }
 function touchMove(event) {
   event.preventDefault();
@@ -52,6 +53,7 @@ function touchMove(event) {
 }
 function touchEnd(event) {
   event.preventDefault();
+  rot = false;
 }
 
 var modelView=mat4.create(), projection=mat4.create();
@@ -221,7 +223,7 @@ function drawBuffer(model) {
 }
 
 var camY=0, camP=-0.5;
-var t = 0;
+var t = 0, t2 = 0, rot = false;
 var lastTime = null;
 function drawFrame(time) {try{
   if (!lastTime) lastTime = time;
@@ -229,6 +231,7 @@ function drawFrame(time) {try{
   if (dt>1/30) dt = 1/30;
   lastTime = time;
   t += dt;
+  if (rot) t2 += dt;
   if(canvas.width!=window.innerWidth||canvas.height!=window.innerHeight)
     onResize();
   
@@ -237,13 +240,19 @@ function drawFrame(time) {try{
   mat4.identity(modelView);
   mat4.rotateX(modelView,modelView, -camP);
   mat4.rotateY(modelView,modelView, camY);
-  gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,1]),mat4.rotateY([],mat4.identity([]), -t)));
   mat4.translate(modelView,modelView, [0,-10,-17]);
   mat4.rotateY(modelView,modelView, t);
   setModelView();
   
+  gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,1]),mat4.rotateY([],mat4.identity([]), -t)));
+  
   drawBuffer(tenkTypes[0].model.body);
+  pushMV();
+  mat4.rotateY(modelView,modelView, t2);
+  setModelView();
+  gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,1]),mat4.rotateY([],mat4.identity([]), -t-t2)));
   drawBuffer(tenkTypes[0].model.turret);
+  popMV();
   
   var err = gl.getError();
   if (err==0) requestAnimationFrame(drawFrame);
