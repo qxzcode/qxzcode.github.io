@@ -20,6 +20,7 @@ window.addEventListener('load', function(e) {try{
   canvas.addEventListener("touchstart", touchStart, false);
   canvas.addEventListener("touchmove", touchMove, false);
   canvas.addEventListener("touchend", touchEnd, false);
+  canvas.addEventListener("touchcancel", touchEnd, false);
   requestAnimationFrame(drawFrame);
 }catch(e){alert("onload: "+e.message)}}, false);
 
@@ -188,14 +189,16 @@ var tenkTypes = [
     turret: [trans(function(p1,p2,p3,c){
       var p4=negX(p2),p5=negX(p1);
       var m1=negY(p1),m2=negY(p2),m3=negY(p3),m4=negY(p4),m5=negY(p5);
-      return[quad(p2,p1,m1,m2,c),quad(p3,p2,m2,m3,c),quad(p4,p3,m3,m4,c),quad(p5,p4,m4,m5,c),quad(p1,p5,m5,m1,c),tri(p1,p3,p2,c),tri(p1,p4,p3,c),tri(p1,p5,p4,c),tri(m1,m2,m3,c),tri(m1,m3,m4,c),tri(m1,m4,m5,c)]}([0.8,0.6,-1],[1.0,0.6,0.5],[0,0.6,1.0],[0.65,0.65,0.65]),0,2.1,0)]
+      return[quad(p2,p1,m1,m2,c),quad(p3,p2,m2,m3,c),quad(p4,p3,m3,m4,c),quad(p5,p4,m4,m5,c),quad(p1,p5,m5,m1,c),tri(p1,p3,p2,c),tri(p1,p4,p3,c),tri(p1,p5,p4,c),tri(m1,m2,m3,c),tri(m1,m3,m4,c),tri(m1,m4,m5,c)]}([0.8,0.6,-1],[1.0,0.6,0.5],[0,0.6,1.0],[0.65,0.65,0.65]),0,2.1,0)],
+    gun: [trans(boxr(0.15,0.15,1.6,[0.7,0.7,0.7]),0,0,-1.6)]
   }
 },
 {
   name: "M4 Shurman",
   model: {
     body: [],
-    turret: []
+    turret: [],
+    gun: []
   }
 },
 ];
@@ -205,6 +208,7 @@ function initBuffers() {
     var t = tenkTypes[i];
     initBuffer(t.model.body);
     initBuffer(t.model.turret);
+    initBuffer(t.model.gun);
   }
 }
 function initBuffer(model) {
@@ -223,7 +227,7 @@ function drawBuffer(model) {
 }
 
 var camY=0, camP=-0.5;
-var t = 0, t2 = 0, rot = false;
+var t = 0, t2 = 0, t3 = 0, rot = false;
 var lastTime = null;
 function drawFrame(time) {try{
   if (!lastTime) lastTime = time;
@@ -231,7 +235,8 @@ function drawFrame(time) {try{
   if (dt>1/30) dt = 1/30;
   lastTime = time;
   t += dt;
-  if (rot) t2 += dt;
+  t2 += 0.5*dt;
+  if (rot) t3 += 2*dt;
   if(canvas.width!=window.innerWidth||canvas.height!=window.innerHeight)
     onResize();
   
@@ -252,6 +257,12 @@ function drawFrame(time) {try{
   setModelView();
   gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,1]),mat4.rotateY([],mat4.identity([]), -t-t2)));
   drawBuffer(tenkTypes[0].model.turret);
+  pushMV();
+  mat4.translate(modelView,modelView, [0,2.2,-0.9]);
+  mat4.rotateX(modelView,modelView, Math.sin(t3)/2);
+  setModelView();
+  drawBuffer(tenkTypes[0].model.gun);
+  popMV();
   popMV();
   
   var err = gl.getError();
