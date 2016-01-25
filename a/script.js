@@ -57,20 +57,21 @@ function touchEnd(event) {
   rot = false;
 }
 
-var modelView=mat4.create(), projection=mat4.create();
+var modelM=mat4.create(),viewM=mat4.create(),projection=mat4.create();
 var shader;
 function initGL() {
   shader = createShaderProg("\
 attribute vec3 inVert;\
 attribute vec3 inColor;\
 attribute vec3 inNorm;\
-uniform mat4 modelView;\
+uniform mat4 modelM;\
+uniform mat4 viewM;\
 uniform mat4 projection;\
 uniform vec3 lightDir;\
 varying vec4 color;\
 void main() {\
-  gl_Position = projection*modelView*vec4(inVert,1.0);\
-  color = vec4(inColor*(dot(lightDir,inNorm)+1.9)/2.9,1.0);\
+  gl_Position = projection*viewM*modelM*vec4(inVert,1.0);\
+  color = vec4(inColor*(dot(lightDir,mat3(modelM)*inNorm)+1.9)/2.9,1.0);\
 }",
 "\
 precision mediump float;\
@@ -86,7 +87,8 @@ void main() {\
   shader.inNormLoc = gl.getAttribLocation(shader,"inNorm");
   gl.enableVertexAttribArray(shader.inNormLoc);
   shader.projectionLoc = gl.getUniformLocation(shader,"projection");
-  shader.modelViewLoc = gl.getUniformLocation(shader,"modelView");
+  shader.modelMLoc = gl.getUniformLocation(shader,"modelM");
+  shader.viewMLoc = gl.getUniformLocation(shader,"viewM");
   shader.lightDirLoc = gl.getUniformLocation(shader,"lightDir");
   
   gl.clearColor(0.2, 0.2, 1.0, 1.0);
@@ -133,15 +135,15 @@ function onResize() {
   gl.uniformMatrix4fv(shader.projectionLoc, false, projection);
 }
 
-var mvStack = [];
-function pushMV() {
-  mvStack.push(mat4.clone(modelView));
+var mmStack = [];
+function pushMM() {
+  mmStack.push(mat4.clone(modelM));
 }
-function popMV() {
-  modelView = mvStack.pop();
+function popMM() {
+  modelM = mmStack.pop();
 }
-function setModelView() {
-  gl.uniformMatrix4fv(shader.modelViewLoc, false, modelView);
+function setModelM() {
+  gl.uniformMatrix4fv(shader.modelMLoc, false, modelM);
 }
 
 function triNorm(v1,v2,v3) {
@@ -241,29 +243,33 @@ function drawFrame(time) {try{
     onResize();
   
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  //mat4.lookAt(modelView, [10,10,10], [y,0,0], [0,1,0]);
-  mat4.identity(modelView);
-  mat4.rotateX(modelView,modelView, -camP);
-  mat4.rotateY(modelView,modelView, camY);
-  mat4.translate(modelView,modelView, [0,-10,-17]);
-  mat4.rotateY(modelView,modelView, t);
-  setModelView();
+  //mat4.lookAt(viewM, [10,10,10], [y,0,0], [0,1,0]);
+  mat4.identity(viewM);
+  mat4.rotateX(viewM,viewM, -camP);
+  mat4.rotateY(viewM,viewM, camY);
+  mat4.translate(viewM,viewM, [0,-10,-17]);
+  gl.uniformMatrix4fv(shader.viewMLoc, false, viewM);
   
-  gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,1]),mat4.rotateY([],mat4.identity([]), -t)));
+  mat4.identity(modelM);
+  mat4.rotateY(modelM,modelM, t);
+  setModelM();
+  
+  //gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,1]),mat4.rotateY([],mat4.identity([]), -t)));
+  gl.uniform3fv(shader.lightDirLoc, vec3.normalize([],[0,1,1]));
   
   drawBuffer(tenkTypes[0].model.body);
-  pushMV();
-  mat4.rotateY(modelView,modelView, t2);
-  setModelView();
-  gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,1]),mat4.rotateY([],mat4.identity([]), -t-t2)));
+  pushMM();
+  mat4.rotateY(modelM,modelM, t2);
+  setModelM();
+  //gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,1]),mat4.rotateY([],mat4.identity([]), -t-t2)));
   drawBuffer(tenkTypes[0].model.turret);
-  pushMV();
-  mat4.translate(modelView,modelView, [0,2.2,-0.9]);
-  mat4.rotateX(modelView,modelView, Math.sin(t3)/2);
-  setModelView();
+  pushMM();
+  mat4.translate(modelM,modelM, [0,2.2,-0.9]);
+  mat4.rotateX(modelM,modelM, Math.sin(t3)/2);
+  setModelM();
   drawBuffer(tenkTypes[0].model.gun);
-  popMV();
-  popMV();
+  popMM();
+  popMM();
   
   var err = gl.getError();
   if (err==0) requestAnimationFrame(drawFrame);
