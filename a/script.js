@@ -272,7 +272,7 @@ function drawFrame(time) {try{
   mat4.identity(viewM);
   mat4.rotateX(viewM,viewM, -camP);
   mat4.rotateY(viewM,viewM, camY);
-  mat4.translate(viewM,viewM, [0,-10,-17]);
+  mat4.translate(viewM,viewM, [0,-2,-17]);
   gl.uniformMatrix4fv(shader.viewMLoc, false, viewM);
   
   mat4.identity(modelM);
@@ -299,6 +299,7 @@ function drawFrame(time) {try{
   if (err==0) requestAnimationFrame(drawFrame);
   else alert("GL error: "+err);
 }catch(e){alert("drawFrame: "+e.message)}}
+
 
 
 
