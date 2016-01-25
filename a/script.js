@@ -187,12 +187,12 @@ var tenkTypes = [
 {
   name: "Toger I",
   model: {
-    body: [trans(boxr(1.7,0.8,3.1,[0.7,0.7,0.7]),0,1.0,0)],
-    turret: [trans(function(p1,p2,p3,c){
+    body: trans(boxr(1.7,0.8,3.1,[0.7,0.7,0.7]),0,1.0,0),
+    turret: trans(function(p1,p2,p3,c){
       var p4=negX(p2),p5=negX(p1);
       var m1=negY(p1),m2=negY(p2),m3=negY(p3),m4=negY(p4),m5=negY(p5);
-      return[quad(p2,p1,m1,m2,c),quad(p3,p2,m2,m3,c),quad(p4,p3,m3,m4,c),quad(p5,p4,m4,m5,c),quad(p1,p5,m5,m1,c),tri(p1,p3,p2,c),tri(p1,p4,p3,c),tri(p1,p5,p4,c),tri(m1,m2,m3,c),tri(m1,m3,m4,c),tri(m1,m4,m5,c)]}([0.8,0.6,-1],[1.0,0.6,0.5],[0,0.6,1.0],[0.65,0.65,0.65]),0,2.1,0)],
-    gun: [trans(boxr(0.15,0.15,1.6,[0.7,0.7,0.7]),0,0,-1.6)]
+      return[quad(p2,p1,m1,m2,c),quad(p3,p2,m2,m3,c),quad(p4,p3,m3,m4,c),quad(p5,p4,m4,m5,c),quad(p1,p5,m5,m1,c),tri(p1,p3,p2,c),tri(p1,p4,p3,c),tri(p1,p5,p4,c),tri(m1,m2,m3,c),tri(m1,m3,m4,c),tri(m1,m4,m5,c)]}([0.8,0.6,-1],[1.0,0.6,0.5],[0,0.6,1.0],[0.65,0.65,0.65]),0,2.1,0),
+    gun: trans(boxr(0.15,0.15,1.6,[0.7,0.7,0.7]),0,0,-1.6)
   }
 },
 {
@@ -205,6 +205,30 @@ var tenkTypes = [
 },
 ];
 
+var terrain = {
+  model: [],
+  init: function() {
+    var h = [];
+    var size = 20;
+    var scale = 2;
+    for (var x=0; x<size+1; x++) {
+      h[x] = [];
+      for (var y=0; y<size+1; y++) {
+        h[x][y] = Math.random()*1;
+      }
+    }
+    var m = [];
+    for (var x=0; x<size; x++) {
+      var wx = x*scale;
+      for (var y=0; y<size; y++) {
+        var wy = y*scale;
+        m.push(quad([wx+scale,h[x+1][y],wy],[wx,h[x][y],wy],[wx,h[x][y+1],wy+scale],[wx+scale,h[x+1][y+1],wy+scale], [0,1,0]));
+      }
+    }
+    terrain.model = trans(m,-size*scale/2,-1,-size*scale/2);
+  }
+};
+
 function initBuffers() {
   for (var i in tenkTypes) {
     var t = tenkTypes[i];
@@ -212,9 +236,11 @@ function initBuffers() {
     initBuffer(t.model.turret);
     initBuffer(t.model.gun);
   }
+  terrain.init();
+  initBuffer(terrain.model);
 }
 function initBuffer(model) {
-  var arr = unpackM(model);
+  var arr = model.slice(0);
   model.buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW);
@@ -243,7 +269,6 @@ function drawFrame(time) {try{
     onResize();
   
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  //mat4.lookAt(viewM, [10,10,10], [y,0,0], [0,1,0]);
   mat4.identity(viewM);
   mat4.rotateX(viewM,viewM, -camP);
   mat4.rotateY(viewM,viewM, camY);
@@ -251,17 +276,16 @@ function drawFrame(time) {try{
   gl.uniformMatrix4fv(shader.viewMLoc, false, viewM);
   
   mat4.identity(modelM);
-  mat4.rotateY(modelM,modelM, t);
+  //mat4.rotateY(modelM,modelM, t);
   setModelM();
   
-  //gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,1]),mat4.rotateY([],mat4.identity([]), -t)));
   gl.uniform3fv(shader.lightDirLoc, vec3.normalize([],[0,1,1]));
   
+  drawBuffer(terrain.model);
   drawBuffer(tenkTypes[0].model.body);
   pushMM();
   mat4.rotateY(modelM,modelM, t2);
   setModelM();
-  //gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[0,1,1]),mat4.rotateY([],mat4.identity([]), -t-t2)));
   drawBuffer(tenkTypes[0].model.turret);
   pushMM();
   mat4.translate(modelM,modelM, [0,2.2,-0.9]);
