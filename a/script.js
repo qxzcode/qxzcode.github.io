@@ -45,8 +45,8 @@ function touchMove(event) {
   var touches = event.changedTouches;
   for (var i=0;i<touches.length;i++) {
     if (touches[i].identifier==camPanTouch) {
-      camY -= (touches[i].pageX-lastCTX)/canvas.height*fovy*0.03;
-      camP += (touches[i].pageY-lastCTY)/canvas.height*fovy*0.03;
+      camY -= (touches[i].pageX-lastCTX)/canvas.height*fovy*0.04;
+      camP += (touches[i].pageY-lastCTY)/canvas.height*fovy*0.04;
       lastCTX = touches[i].pageX;
       lastCTY = touches[i].pageY;
     }
