@@ -18,6 +18,10 @@ window.addEventListener('load', function(e) {try{
   gl = canvas.getContext('experimental-webgl');
   initGL();
   initGame();
+  window.onbeforeunload = function() {
+    ws.onclose = function(){};
+    ws.close()
+  };
   canvas.addEventListener("touchstart", touchStart, false);
   canvas.addEventListener("touchmove", touchMove, false);
   canvas.addEventListener("touchend", touchEnd, false);
@@ -324,9 +328,48 @@ function moveTowardsA(obj,prop, set, rate) {
     obj[prop] += d>Math.PI? rate : -rate;
 }
 
+var ws;
 function initGame() {
-  tenks.push(newTenk(tenkTypes[0], 4, 0, 4));
+  ws = new WebSocket("ws://qxznet.herokuapp.com/");
+  ws.binaryType = "arraybuffer";
+  ws.onopen = function(event) {
+    alert("open!");
+  }
+  ws.onmessage = function(event) {
+    // process message
+    var arr = readFloats(event.data);
+    var n = Math.floor(arr.length/6);
+    for (var i=0; i<n; i++) {
+      if (!tenks[i])
+        tenks[i] = newTenk(tenkTypes[0],0,0,0);
+      tenks[i].pos[0] = arr[i*6+0];
+      tenks[i].pos[1] = arr[i*6+1];
+      tenks[i].pos[2] = arr[i*6+2];
+      tenks[i].a      = arr[i*6+3];
+      tenks[i].ta     = arr[i*6+4];
+      tenks[i].ga     = arr[i*6+5];
+    }
+    // send response
+    var t = myTenk;
+    sendFloats([t.pos[0],t.pos[1],t.pos[2],t.a,t.ta,t.ga]);
+  }
+  ws.onclose = function(event) {
+    alert("closed: "+event.code);
+  }
+  ws.onerror = function(event) {
+    alert("error!");
+  }
   myTenk = newTenk(tenkTypes[0], 0, 0, 0);
+}
+function sendFloats(arr) {
+  var buf = new ArrayBuffer(arr.length*4);
+  var floats = new Float32Array(buf);
+  for (var i=0; i<floats.length; i++)
+    floats[i] = arr[i];
+  ws.send(buf);
+}
+function readFloats(data) {
+  return Array.from(new Float32Array(data));
 }
 
 var camY=0, camP=-0.5;
@@ -356,7 +399,7 @@ function drawFrame(time) {try{
   
   drawBuffer(terrain.model);
   for (var i in tenks) {
-    tenks[i].draw();tenks[i].ta += dt;
+    tenks[i].draw();
   }
   myTenk.draw();
   myTenk.a -= joyX*1*dt;
