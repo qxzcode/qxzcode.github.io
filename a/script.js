@@ -27,16 +27,28 @@ window.addEventListener('load', function(e) {try{
 
 var fovy = 45;
 
-var camPanTouch = null;
-var lastCTX=0, lastCTY=0;
+var camPanTouch=null, joyTouch=null;
+var lastCTX, lastCTY;
+var joyCX, joyCY, joySize;
+var joyX=0, joyY=0;
+function joy(tx, ty) {
+  joyX = Math.min(1,Math.max(-1,(tx-joyCX)/joySize));
+  joyY = Math.min(1,Math.max(-1,(ty-joyCY)/joySize));
+}
 function touchStart(event) {
   event.preventDefault();
   var touches = event.changedTouches;
   for (var i=0;i<touches.length;i++) {
-    if (touches[i].pageX>canvas.width/2) {
-      camPanTouch = touches[i].identifier;
-      lastCTX = touches[i].pageX;
-      lastCTY = touches[i].pageY;
+    var tx=touches[i].pageX, ty=touches[i].pageY;
+    var tid = touches[i].identifier;
+    if (Math.abs(tx-joyCX)<joySize*1.5&&Math.abs(ty-joyCY)<joySize*1.5){
+      joyTouch = tid;
+      joy(tx,ty);
+    }
+    if (tx>canvas.width/2) {
+      camPanTouch = tid;
+      lastCTX = tx;
+      lastCTY = ty;
     }
   }
 }
@@ -44,16 +56,28 @@ function touchMove(event) {
   event.preventDefault();
   var touches = event.changedTouches;
   for (var i=0;i<touches.length;i++) {
-    if (touches[i].identifier==camPanTouch) {
-      camY -= (touches[i].pageX-lastCTX)/canvas.height*fovy*0.06;
-      camP -= (touches[i].pageY-lastCTY)/canvas.height*fovy*0.06;
-      lastCTX = touches[i].pageX;
-      lastCTY = touches[i].pageY;
+    var tx=touches[i].pageX, ty=touches[i].pageY;
+    var tid = touches[i].identifier;
+    if (tid==joyTouch) {
+      joy(tx,ty);
+    }
+    if (tid==camPanTouch) {
+      camY -= (tx-lastCTX)/canvas.height*fovy*0.06;
+      camP -= (ty-lastCTY)/canvas.height*fovy*0.06;
+      lastCTX = tx;
+      lastCTY = ty;
     }
   }
 }
 function touchEnd(event) {
   event.preventDefault();
+  var touches = event.changedTouches;
+  for (var i=0;i<touches.length;i++) {
+    var tid = touches[i].identifier;
+    if (tid==joyTouch) {
+      joyX = joyY = 0;
+    }
+  }
 }
 
 var modelM=mat4.create(),viewM=mat4.create(),projection=mat4.create();
@@ -132,6 +156,10 @@ function onResize() {
   gl.viewport(0,0, w,h);
   mat4.perspective(projection, fovy*Math.PI/180, w/h, 0.1, 100.0);
   gl.uniformMatrix4fv(shader.projectionLoc, false, projection);
+  
+  joyCX = canvas.width/5;
+  joyCY = canvas.height*4/5;
+  joySize = canvas.height/8;
 }
 
 var mmStack = [];
@@ -214,10 +242,11 @@ function newTenk(type, x, y, z) {
   return {
     type: type,
     pos: [x,y,z],
-    ta: 0, ga: 0,
+    a: 0, ta: 0, ga: 0,
     draw: function() {
       pushMM();
       mat4.translate(modelM,modelM, this.pos);
+      mat4.rotateY(modelM,modelM, this.a);
       setModelM();
       drawBuffer(this.type.model.body);
       mat4.rotateY(modelM,modelM, this.ta);
@@ -281,11 +310,18 @@ function drawBuffer(model) {
   gl.drawArrays(gl.TRIANGLES, 0, model.numVerts);
 }
 
-function moveTowards(obj,prop, set, rate) {
-  if (Math.abs(obj[prop]-set)<rate)
+function normAng(a) {
+  var a2 = a%(Math.PI*2);
+  if (a<0) a2 += Math.PI*2;
+  return a2;
+}
+function moveTowardsA(obj,prop, set, rate) {
+  var d = normAng(obj[prop]-set);
+  var ad = Math.abs(d);
+  if (ad<rate || ad>Math.PI*2-rate)
     obj[prop] = set;
   else
-    obj[prop] += obj[prop]>set? -rate : rate;
+    obj[prop] += d>Math.PI? rate : -rate;
 }
 
 function initGame() {
@@ -323,8 +359,11 @@ function drawFrame(time) {try{
     tenks[i].draw();tenks[i].ta += dt;
   }
   myTenk.draw();
-  moveTowards(myTenk,"ta",camY,myTenk.type.tSpd*dt);
-  moveTowards(myTenk,"ga",camP+0.3,myTenk.type.gSpd*dt);
+  myTenk.a -= joyX*1*dt;
+  var dr = joyY*5*dt;
+  vec3.add(myTenk.pos,myTenk.pos,[dr*Math.sin(myTenk.a),0,dr*Math.cos(myTenk.a)]);
+  moveTowardsA(myTenk,"ta",camY-myTenk.a,myTenk.type.tSpd*dt);
+  moveTowardsA(myTenk,"ga",camP+0.3,myTenk.type.gSpd*dt);
   
   var err = gl.getError();
   if (err==0) requestAnimationFrame(drawFrame);
