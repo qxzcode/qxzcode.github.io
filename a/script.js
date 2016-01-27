@@ -17,6 +17,7 @@ window.addEventListener('load', function(e) {try{
   canvas = document.getElementById('c');
   gl = canvas.getContext('experimental-webgl');
   initGL();
+  initGame();
   canvas.addEventListener("touchstart", touchStart, false);
   canvas.addEventListener("touchmove", touchMove, false);
   canvas.addEventListener("touchend", touchEnd, false);
@@ -38,15 +39,14 @@ function touchStart(event) {
       lastCTY = touches[i].pageY;
     }
   }
-  rot = true;
 }
 function touchMove(event) {
   event.preventDefault();
   var touches = event.changedTouches;
   for (var i=0;i<touches.length;i++) {
     if (touches[i].identifier==camPanTouch) {
-      camY -= (touches[i].pageX-lastCTX)/canvas.height*fovy*0.04;
-      camP += (touches[i].pageY-lastCTY)/canvas.height*fovy*0.04;
+      camY -= (touches[i].pageX-lastCTX)/canvas.height*fovy*0.06;
+      camP -= (touches[i].pageY-lastCTY)/canvas.height*fovy*0.06;
       lastCTX = touches[i].pageX;
       lastCTY = touches[i].pageY;
     }
@@ -54,7 +54,6 @@ function touchMove(event) {
 }
 function touchEnd(event) {
   event.preventDefault();
-  rot = false;
 }
 
 var modelM=mat4.create(),viewM=mat4.create(),projection=mat4.create();
@@ -186,24 +185,52 @@ function negY(v) {var c=vec3.clone(v);c[1]*=-1;return c}
 var tenkTypes = [
 {
   name: "Toger I",
+  tSpd: 0.5, gSpd: 0.7,
   model: {
-    body: trans(boxr(1.7,0.8,3.1,[0.7,0.7,0.7]),0,1.0,0),
+    body: trans(boxr(1.7,0.8,3.1,[0.7,0.7,0.7]),0,0.8,0),
     turret: trans(function(p1,p2,p3,c){
       var p4=negX(p2),p5=negX(p1);
       var m1=negY(p1),m2=negY(p2),m3=negY(p3),m4=negY(p4),m5=negY(p5);
       return[quad(p2,p1,m1,m2,c),quad(p3,p2,m2,m3,c),quad(p4,p3,m3,m4,c),quad(p5,p4,m4,m5,c),quad(p1,p5,m5,m1,c),tri(p1,p3,p2,c),tri(p1,p4,p3,c),tri(p1,p5,p4,c),tri(m1,m2,m3,c),tri(m1,m3,m4,c),tri(m1,m4,m5,c)]}([0.8,0.6,-1],[1.0,0.6,0.5],[0,0.6,1.0],[0.65,0.65,0.65]),0,2.1,0),
-    gun: trans(boxr(0.15,0.15,1.6,[0.7,0.7,0.7]),0,0,-1.6)
+    gun: trans(boxr(0.15,0.15,1.6,[0.7,0.7,0.7]),0,0,-1.6),
+    gunTrans: [0,2.2,-0.9]
   }
 },
 {
   name: "M4 Shurman",
+  tSpd: 0.5, gSpd: 0.5,
   model: {
     body: [],
     turret: [],
-    gun: []
+    gun: [],
+    gunTrans: [0,2.2,-0.9]
   }
 },
 ];
+
+var tenks = [];
+var myTenk;
+function newTenk(type, x, y, z) {
+  return {
+    type: type,
+    pos: [x,y,z],
+    ta: 0, ga: 0,
+    draw: function() {
+      pushMM();
+      mat4.translate(modelM,modelM, this.pos);
+      setModelM();
+      drawBuffer(this.type.model.body);
+      mat4.rotateY(modelM,modelM, this.ta);
+      setModelM();
+      drawBuffer(this.type.model.turret);
+      mat4.translate(modelM,modelM, this.type.model.gunTrans);
+      mat4.rotateX(modelM,modelM, this.ga);
+      setModelM();
+      drawBuffer(this.type.model.gun);
+      popMM();
+    }
+  };
+}
 
 var terrain = {
   model: [],
@@ -240,11 +267,11 @@ function initBuffers() {
   initBuffer(terrain.model);
 }
 function initBuffer(model) {
-  var arr = model.slice(0);
   model.buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW);
-  model.numVerts = arr.length/9;
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model), gl.STATIC_DRAW);
+  model.numVerts = model.length/9;
+  model.length = 0; // delete now-unneeded vertex data
 }
 function drawBuffer(model) {
   gl.bindBuffer(gl.ARRAY_BUFFER, model.buffer);
@@ -254,52 +281,55 @@ function drawBuffer(model) {
   gl.drawArrays(gl.TRIANGLES, 0, model.numVerts);
 }
 
+function moveTowards(obj,prop, set, rate) {
+  if (Math.abs(obj[prop]-set)<rate)
+    obj[prop] = set;
+  else
+    obj[prop] += obj[prop]>set? -rate : rate;
+}
+
+function initGame() {
+  tenks.push(newTenk(tenkTypes[0], 4, 0, 4));
+  myTenk = newTenk(tenkTypes[0], 0, 0, 0);
+}
+
 var camY=0, camP=-0.5;
-var t = 0, t2 = 0, t3 = 0, rot = false;
 var lastTime = null;
 function drawFrame(time) {try{
   if (!lastTime) lastTime = time;
-  var dt = (time-lastTime)/1000;
+  var rdt = (time-lastTime)/1000, dt = rdt;
   if (dt>1/30) dt = 1/30;
   lastTime = time;
-  t += dt;
-  t2 += 0.5*dt;
-  if (rot) t3 += 2*dt;
   if(canvas.width!=window.innerWidth||canvas.height!=window.innerHeight)
     onResize();
   
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  // view transform
   mat4.identity(viewM);
+  mat4.translate(viewM,viewM, [0,0,-15]);
   mat4.rotateX(viewM,viewM, -camP);
-  mat4.rotateY(viewM,viewM, camY);
-  mat4.translate(viewM,viewM, [0,-2,-17]);
+  mat4.rotateY(viewM,viewM, -camY);
+  mat4.translate(viewM,viewM, vec3.negate([],myTenk.type.model.gunTrans));
+  mat4.translate(viewM,viewM, vec3.negate([],myTenk.pos));
   gl.uniformMatrix4fv(shader.viewMLoc, false, viewM);
   
   mat4.identity(modelM);
-  //mat4.rotateY(modelM,modelM, t);
   setModelM();
   
-  gl.uniform3fv(shader.lightDirLoc, vec3.normalize([],[0,1,1]));
+  gl.uniform3fv(shader.lightDirLoc, vec3.normalize([],[1,3,2]));
   
   drawBuffer(terrain.model);
-  drawBuffer(tenkTypes[0].model.body);
-  pushMM();
-  mat4.rotateY(modelM,modelM, t2);
-  setModelM();
-  drawBuffer(tenkTypes[0].model.turret);
-  pushMM();
-  mat4.translate(modelM,modelM, [0,2.2,-0.9]);
-  mat4.rotateX(modelM,modelM, Math.sin(t3)/2);
-  setModelM();
-  drawBuffer(tenkTypes[0].model.gun);
-  popMM();
-  popMM();
+  for (var i in tenks) {
+    tenks[i].draw();tenks[i].ta += dt;
+  }
+  myTenk.draw();
+  moveTowards(myTenk,"ta",camY,myTenk.type.tSpd*dt);
+  moveTowards(myTenk,"ga",camP+0.3,myTenk.type.gSpd*dt);
   
   var err = gl.getError();
   if (err==0) requestAnimationFrame(drawFrame);
   else alert("GL error: "+err);
 }catch(e){alert("drawFrame: "+e.message)}}
-
 
 
 
