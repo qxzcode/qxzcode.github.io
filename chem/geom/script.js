@@ -18,9 +18,9 @@ window.addEventListener('load', function(e) {try{
   gl = canvas.getContext('experimental-webgl');
   initGL();
   initGame();
-  window.addEventListener("touchstart", function(event) {alert("event")
+  window.addEventListener("touchstart", function(event) {
     event.preventDefault();
-    var ts = event.changedTouches;
+    var ts = event.changedTouches;alert(ts.length)
     for (var i=0;i<ts.length;i++)
       touchStart(ts[i].pageX, ts[i].pageY. ts[i].identifier);
   }, false);
