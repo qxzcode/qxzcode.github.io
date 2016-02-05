@@ -21,8 +21,12 @@ window.addEventListener('load', function(e) {try{
   window.addEventListener("touchstart", function(event) {
     event.preventDefault();
     var ts = event.changedTouches;
-    for (var i=0;i<ts.length;i++)
+    for (var i=0;i<ts.length;i++) {
+      alert("touch "+i)try{
       touchStart(ts[i].pageX, ts[i].pageY. ts[i].identifier);
+    }catch(e){alert(e.message)}
+      alert("After")
+    }
   }, false);
   window.addEventListener("touchmove", function(event) {
     event.preventDefault();
