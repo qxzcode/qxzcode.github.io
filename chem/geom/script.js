@@ -20,7 +20,7 @@ window.addEventListener('load', function(e) {try{
   initGame();
   window.addEventListener("touchstart", function(event) {
     event.preventDefault();
-    var ts = event.changedTouches;alert(ts.length)
+    var ts = event.changedTouches;
     for (var i=0;i<ts.length;i++)
       touchStart(ts[i].pageX, ts[i].pageY. ts[i].identifier);
   }, false);
@@ -74,7 +74,7 @@ function setSitesText() {
   setText("sites2",sites);
   setText("edgName",edgNames[sites-2]);
 }
-function touchStart(tx, ty, tid) {
+function touchStart(tx, ty, tid) {alert(tx+" "+ty)
   if (ty>canvas.height*0.85) {
     if (tx>canvas.width/2) bonds++;
     else bonds--;
