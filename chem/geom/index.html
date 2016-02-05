@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Molecular Geometry</title>
+  <style>
+@charset "UTF-8";
+
+body, canvas {
+  margin: 0px;
+  padding: 0px;
+  background-color: #444;
+}
+div {
+  position: absolute;
+  font-family: helvetica;
+  color: white;
+  font-size: 5%;
+  text-align: center;
+}
+p {
+  font-size: 40%;
+  margin: 0px;
+  margin-top: 3px;
+}
+.b {
+  font-size: 3%;
+  width: 30%;
+}
+#text0 {
+  left: 0%;
+  top: 85%;
+  width: 100%;
+}
+#text1 {
+  left: 0%;
+  top: 3%;
+  width: 100%;
+}
+#b00 {
+  left: 0%;
+  top: 89%;
+}
+#b10 {
+  left: 70%;
+  top: 89%;
+}
+#b01 {
+  left: 0%;
+  top: 7%;
+}
+#b11 {
+  left: 70%;
+  top: 7%;
+}
+#sign {
+  left: 80%;
+  top: 96%;
+  color: #777;
+  font-size: 2%;
+  width: 18%;
+  text-align: right;
+}
+  </style>
+  <script src="script.js"></script>
+</head>
+<body>
+  <div id="text1"><p>Electron domain geometry:</p><span id="edgName">Trigonal bipyramidal</span><p>(<span id="sites1">5</span> bonding sites)</p></div>
+  <div id="text0"><p>Molecular geometry:</p><span id="mgName">Trigonal bipyramidal</span><p>(<span id="bonds">5</span>/<span id="sites2">5</span> bonded)</p></div>
+  <div class="b" id="b10">+ bond</div>
+  <div class="b" id="b00">&ndash; bond</div>
+  <div class="b" id="b11">+ site</div>
+  <div class="b" id="b01">&ndash; site</div>
+  <div id="sign">by Quinn Tucker '18</div>
+  <canvas id="c">ur browzr iz b dum</canvas>
+</body>
+</html>
