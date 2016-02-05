@@ -21,24 +21,20 @@ window.addEventListener('load', function(e) {try{
   window.addEventListener("touchstart", function(event) {
     event.preventDefault();
     var ts = event.changedTouches;
-    for (var i=0;i<ts.length;i++) {
-      alert("touch "+ts[i]);try{
-        touchStart(ts[i].pageX, ts[i].pageY. ts[i].identifier);
-      }catch(exx){alert(exx.message)}
-      alert("After");
-    }
+    for (var i=0;i<ts.length;i++)
+      touchStart(ts[i].pageX, ts[i].pageY, ts[i].identifier);
   }, false);
   window.addEventListener("touchmove", function(event) {
     event.preventDefault();
     var ts = event.changedTouches;
     for (var i=0;i<ts.length;i++)
-      touchMove(ts[i].pageX, ts[i].pageY. ts[i].identifier);
+      touchMove(ts[i].pageX, ts[i].pageY, ts[i].identifier);
   }, false);
   function tEnd(event) {
     event.preventDefault();
     var ts = event.changedTouches;
     for (var i=0;i<ts.length;i++)
-      touchEnd(ts[i].pageX, ts[i].pageY. ts[i].identifier);
+      touchEnd(ts[i].pageX, ts[i].pageY, ts[i].identifier);
   }
   window.addEventListener("touchend", tEnd, false);
   window.addEventListener("touchcancel", tEnd, false);
