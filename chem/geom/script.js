@@ -23,6 +23,7 @@ window.addEventListener('load', function(e) {try{
   window.addEventListener("touchend", touchEnd, false);
   window.addEventListener("touchcancel", touchEnd, false);
   document.body.style.fontSize = canvas.height+"px";
+  setSitesText();
   requestAnimationFrame(drawFrame);
 }catch(e){alert("onload: "+e.message)}}, false);
 
@@ -30,13 +31,55 @@ var fovy = 45;
 
 var camPanTouch=null, joyTouch=null;
 var lastCTX, lastCTY;
+function setText(id,text) {
+  document.getElementById(id).innerText = text;
+}
+var edgNames = [
+  "Linear",
+  "Trigonal planar",
+  "Tetrahedral",
+  "Trigonal bipyramidal",
+  "Octahedral",
+];
+var mgNames = [
+  ["Linear","Linear"],
+  ["Linear","Bent","Trigonal planar"],
+  ["Linear","Bent","Trigonal pyramidial","Tetrahedral"],
+  ["Linear","Linear","T-shaped","Seesaw","Trigonal bipyramidal"],
+  ["Linear","Linear","T-shaped","Square planar","Square pyramidal","Octahedral"],
+];
+function setBondsText() {
+  setText("bonds",bonds);
+  setText("mgName",mgNames[sites-2][bonds-1]);
+}
+function setSitesText() {
+  setBondsText();
+  setText("sites1",sites);
+  setText("sites2",sites);
+  setText("edgName",edgNames[sites-2]);
+}
 function touchStart(event) {
   event.preventDefault();
   var touches = event.changedTouches;
   for (var i=0;i<touches.length;i++) {
     var tx=touches[i].pageX, ty=touches[i].pageY;
     var tid = touches[i].identifier;
-    if (true) {
+    if (ty>canvas.height*0.85) {
+      if (tx>canvas.width/2) bonds++;
+      else bonds--;
+      if (bonds<1) bonds=1;
+      if (bonds>sites) bonds=sites;
+      setBondsText();
+    } else if (ty<canvas.height*0.15) {
+      var d = sites-bonds;
+      if (tx>canvas.width/2) sites++;
+      else sites--;
+      if (sites<2) sites=2;
+      if (sites>6) sites=6;
+      bonds = sites-d;
+      if (bonds<1) bonds=1;
+      setSitesText();
+    } else {
       camPanTouch = tid;
       lastCTX = tx;
       lastCTY = ty;
@@ -278,7 +321,7 @@ function atom(p,y) {
 
 var camRot = quat.create();
 var lastTime = null;
-var bonds = 5, sites = 5;
+var bonds = 4, sites = 4;
 function drawFrame(time) {try{
   if (!lastTime) lastTime = time;
   var rdt = (time-lastTime)/1000, dt = rdt;
@@ -307,11 +350,16 @@ function drawFrame(time) {try{
   drawBuffer(sphereBuf);
   popMM();
   var pi = Math.PI;
+  var tetA = 2*Math.atan(Math.SQRT2);
   var atoms = [
+    [[0,0],[pi,0]],
+    [[0,0],[pi*2/3,pi/2],[pi*4/3,pi/2]],
+    [[0,0],[tetA,0],[tetA,pi*2/3],[tetA,pi*4/3]],
     [[0,0],[pi,0],[pi/2,0],[pi/2,pi*2/3],[pi/2,pi*4/3]],
+    [[0,0],[pi,0],[pi/2,0],[pi/2,pi],[pi/2,pi/2],[pi/2,pi*3/2]],
   ];
   for (var b=0; b<bonds; b++) {
-    var a = atoms[sites-5][b];
+    var a = atoms[sites-2][b];
     atom(a[0],a[1]);
   }
   
