@@ -341,7 +341,7 @@ function drawFrame(time) {try{
   mat4.identity(modelM);
   setModelM();
   
-  gl.uniform3fv(shader.lightDirLoc, vec3.normalize([],[-1,2,3]));
+  gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[-2,2,1]),mat4.invert([],rotM)));
   
   setColor(1,1,0);
   pushMM();
