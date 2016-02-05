@@ -18,14 +18,12 @@ window.addEventListener('load', function(e) {try{
   gl = canvas.getContext('experimental-webgl');
   initGL();
   initGame();
-  window.onbeforeunload = function() {
-    ws.onclose = function(){};
-    ws.close()
-  };
-  canvas.addEventListener("touchstart", touchStart, false);
-  canvas.addEventListener("touchmove", touchMove, false);
-  canvas.addEventListener("touchend", touchEnd, false);
-  canvas.addEventListener("touchcancel", touchEnd, false);
+  window.addEventListener("touchstart", touchStart, false);
+  window.addEventListener("touchmove", touchMove, false);
+  window.addEventListener("touchend", touchEnd, false);
+  window.addEventListener("touchcancel", touchEnd, false);
+  document.body.style.fontSize = canvas.height+"px";
+  setSitesText();
   requestAnimationFrame(drawFrame);
 }catch(e){alert("onload: "+e.message)}}, false);
 
@@ -33,11 +31,32 @@ var fovy = 45;
 
 var camPanTouch=null, joyTouch=null;
 var lastCTX, lastCTY;
-var joyCX, joyCY, joySize;
-var joyX=0, joyY=0;
-function joy(tx, ty) {
-  joyX = Math.min(1,Math.max(-1,(tx-joyCX)/joySize));
-  joyY = Math.min(1,Math.max(-1,(ty-joyCY)/joySize));
+function setText(id,text) {
+  document.getElementById(id).innerText = text;
+}
+var edgNames = [
+  "Linear",
+  "Trigonal planar",
+  "Tetrahedral",
+  "Trigonal bipyramidal",
+  "Octahedral",
+];
+var mgNames = [
+  ["Linear","Linear"],
+  ["Linear","Bent","Trigonal planar"],
+  ["Linear","Bent","Trigonal pyramidial","Tetrahedral"],
+  ["Linear","Linear","T-shaped","Seesaw","Trigonal bipyramidal"],
+  ["Linear","Linear","T-shaped","Square planar","Square pyramidal","Octahedral"],
+];
+function setBondsText() {
+  setText("bonds",bonds);
+  setText("mgName",mgNames[sites-2][bonds-1]);
+}
+function setSitesText() {
+  setBondsText();
+  setText("sites1",sites);
+  setText("sites2",sites);
+  setText("edgName",edgNames[sites-2]);
 }
 function touchStart(event) {
   event.preventDefault();
@@ -45,11 +64,22 @@ function touchStart(event) {
   for (var i=0;i<touches.length;i++) {
     var tx=touches[i].pageX, ty=touches[i].pageY;
     var tid = touches[i].identifier;
-    if (Math.abs(tx-joyCX)<joySize*1.5&&Math.abs(ty-joyCY)<joySize*1.5){
-      joyTouch = tid;
-      joy(tx,ty);
-    }
-    if (tx>canvas.width/2) {
+    if (ty>canvas.height*0.85) {
+      if (tx>canvas.width/2) bonds++;
+      else bonds--;
+      if (bonds<1) bonds=1;
+      if (bonds>sites) bonds=sites;
+      setBondsText();
+    } else if (ty<canvas.height*0.15) {
+      var d = sites-bonds;
+      if (tx>canvas.width/2) sites++;
+      else sites--;
+      if (sites<2) sites=2;
+      if (sites>6) sites=6;
+      bonds = sites-d;
+      if (bonds<1) bonds=1;
+      setSitesText();
+    } else {
       camPanTouch = tid;
       lastCTX = tx;
       lastCTY = ty;
@@ -62,12 +92,11 @@ function touchMove(event) {
   for (var i=0;i<touches.length;i++) {
     var tx=touches[i].pageX, ty=touches[i].pageY;
     var tid = touches[i].identifier;
-    if (tid==joyTouch) {
-      joy(tx,ty);
-    }
     if (tid==camPanTouch) {
-      camY -= (tx-lastCTX)/canvas.height*fovy*0.06;
-      camP -= (ty-lastCTY)/canvas.height*fovy*0.06;
+      var tmp = quat.create();
+      quat.rotateY(tmp,tmp,(tx-lastCTX)/canvas.height*45*0.1);
+      quat.rotateX(tmp,tmp,(ty-lastCTY)/canvas.height*45*0.1);
+      quat.mul(camRot,tmp,camRot);
       lastCTX = tx;
       lastCTY = ty;
     }
@@ -78,9 +107,7 @@ function touchEnd(event) {
   var touches = event.changedTouches;
   for (var i=0;i<touches.length;i++) {
     var tid = touches[i].identifier;
-    if (tid==joyTouch) {
-      joyX = joyY = 0;
-    }
+    
   }
 }
 
@@ -89,36 +116,35 @@ var shader;
 function initGL() {
   shader = createShaderProg("\
 attribute vec3 inVert;\
-attribute vec3 inColor;\
 attribute vec3 inNorm;\
 uniform mat4 modelM;\
 uniform mat4 viewM;\
 uniform mat4 projection;\
-uniform vec3 lightDir;\
-varying vec4 color;\
+varying vec3 rotNorm;\
 void main() {\
   gl_Position = projection*viewM*modelM*vec4(inVert,1.0);\
-  color = vec4(inColor*(dot(lightDir,mat3(modelM)*inNorm)+1.9)/2.9,1.0);\
+  rotNorm = mat3(modelM)*inNorm;\
 }",
 "\
 precision mediump float;\
-varying vec4 color;\
+uniform vec3 lightDir;\
+uniform vec3 color;\
+varying vec3 rotNorm;\
 void main() {\
-  gl_FragColor = color;\
+  gl_FragColor = vec4(color*((dot(lightDir,normalize(rotNorm))+3.0)/4.0),1.0);\
 }");
   gl.useProgram(shader);
   shader.inVertLoc = gl.getAttribLocation(shader,"inVert");
   gl.enableVertexAttribArray(shader.inVertLoc);
-  shader.inColorLoc = gl.getAttribLocation(shader,"inColor");
-  gl.enableVertexAttribArray(shader.inColorLoc);
   shader.inNormLoc = gl.getAttribLocation(shader,"inNorm");
   gl.enableVertexAttribArray(shader.inNormLoc);
   shader.projectionLoc = gl.getUniformLocation(shader,"projection");
   shader.modelMLoc = gl.getUniformLocation(shader,"modelM");
   shader.viewMLoc = gl.getUniformLocation(shader,"viewM");
+  shader.colorLoc = gl.getUniformLocation(shader,"color");
   shader.lightDirLoc = gl.getUniformLocation(shader,"lightDir");
   
-  gl.clearColor(0.2, 0.2, 1.0, 1.0);
+  gl.clearColor(0,0,0, 0);
   gl.enable(gl.DEPTH_TEST);
   
   onResize();
@@ -132,7 +158,7 @@ function createShaderProg(vSrc, fSrc) {
   gl.shaderSource(vs, vSrc);
   gl.compileShader(vs);
   if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
-    alert(gl.getShaderInfoLog(vs));
+    alert("VS: "+gl.getShaderInfoLog(vs));
     return null;
   }
   // compile fragment shader
@@ -140,7 +166,7 @@ function createShaderProg(vSrc, fSrc) {
   gl.shaderSource(fs, fSrc);
   gl.compileShader(fs);
   if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
-    alert(gl.getShaderInfoLog(fs));
+    alert("FS: "+gl.getShaderInfoLog(fs));
     return null;
   }
   // link program
@@ -158,12 +184,8 @@ function onResize() {
   var w = canvas.width = window.innerWidth;
   var h = canvas.height = window.innerHeight;
   gl.viewport(0,0, w,h);
-  mat4.perspective(projection, fovy*Math.PI/180, w/h, 0.1, 100.0);
+  mat4.perspective(projection, fovy*Math.PI/180, w/h, 0.1, 1000.0);
   gl.uniformMatrix4fv(shader.projectionLoc, false, projection);
-  
-  joyCX = canvas.width/5;
-  joyCY = canvas.height*4/5;
-  joySize = canvas.height/8;
 }
 
 var mmStack = [];
@@ -214,166 +236,92 @@ function unpackM(m) {
 function negX(v) {var c=vec3.clone(v);c[0]*=-1;return c}
 function negY(v) {var c=vec3.clone(v);c[1]*=-1;return c}
 
-var tenkTypes = [
-{
-  name: "Toger I",
-  tSpd: 0.5, gSpd: 0.7,
-  model: {
-    body: trans(boxr(1.7,0.8,3.1,[0.7,0.7,0.7]),0,0.8,0),
-    turret: trans(function(p1,p2,p3,c){
-      var p4=negX(p2),p5=negX(p1);
-      var m1=negY(p1),m2=negY(p2),m3=negY(p3),m4=negY(p4),m5=negY(p5);
-      return[quad(p2,p1,m1,m2,c),quad(p3,p2,m2,m3,c),quad(p4,p3,m3,m4,c),quad(p5,p4,m4,m5,c),quad(p1,p5,m5,m1,c),tri(p1,p3,p2,c),tri(p1,p4,p3,c),tri(p1,p5,p4,c),tri(m1,m2,m3,c),tri(m1,m3,m4,c),tri(m1,m4,m5,c)]}([0.8,0.6,-1],[1.0,0.6,0.5],[0,0.6,1.0],[0.65,0.65,0.65]),0,2.1,0),
-    gun: trans(boxr(0.15,0.15,1.6,[0.7,0.7,0.7]),0,0,-1.6),
-    gunTrans: [0,2.2,-0.9]
-  }
-},
-{
-  name: "M4 Shurman",
-  tSpd: 0.5, gSpd: 0.5,
-  model: {
-    body: [],
-    turret: [],
-    gun: [],
-    gunTrans: [0,2.2,-0.9]
-  }
-},
-];
-
-var tenks = [];
-var myTenk;
-function newTenk(type, x, y, z) {
-  return {
-    type: type,
-    pos: [x,y,z],
-    a: 0, ta: 0, ga: 0,
-    draw: function() {
-      pushMM();
-      mat4.translate(modelM,modelM, this.pos);
-      mat4.rotateY(modelM,modelM, this.a);
-      setModelM();
-      drawBuffer(this.type.model.body);
-      mat4.rotateY(modelM,modelM, this.ta);
-      setModelM();
-      drawBuffer(this.type.model.turret);
-      mat4.translate(modelM,modelM, this.type.model.gunTrans);
-      mat4.rotateX(modelM,modelM, this.ga);
-      setModelM();
-      drawBuffer(this.type.model.gun);
-      popMM();
-    }
-  };
-}
-
-var terrain = {
-  model: [],
-  init: function() {
-    var h = [];
-    var size = 20;
-    var scale = 2;
-    for (var x=0; x<size+1; x++) {
-      h[x] = [];
-      for (var y=0; y<size+1; y++) {
-        h[x][y] = Math.random()*1;
-      }
-    }
-    var m = [];
-    for (var x=0; x<size; x++) {
-      var wx = x*scale;
-      for (var y=0; y<size; y++) {
-        var wy = y*scale;
-        m.push(quad([wx+scale,h[x+1][y],wy],[wx,h[x][y],wy],[wx,h[x][y+1],wy+scale],[wx+scale,h[x+1][y+1],wy+scale], [0,1,0]));
-      }
-    }
-    terrain.model = trans(m,-size*scale/2,-1,-size*scale/2);
-  }
-};
-
+var sphereBuf, cylBuf;
 function initBuffers() {
-  for (var i in tenkTypes) {
-    var t = tenkTypes[i];
-    initBuffer(t.model.body);
-    initBuffer(t.model.turret);
-    initBuffer(t.model.gun);
+  var m = [];
+  var SEGS=32, sSize=Math.PI*2/SEGS;
+  function sp(a,b) {
+    var x = Math.cos(a)*Math.cos(b);
+    var z = Math.sin(a)*Math.cos(b);
+    var y = Math.sin(b);
+    return [x/2,y/2,z/2];
   }
-  terrain.init();
-  initBuffer(terrain.model);
+  for (var a=0; a<Math.PI*2; a+=sSize) {
+    for (var b=-Math.PI/2; b<Math.PI/2; b+=sSize) {
+      var p00=sp(a,b);
+      var p10=sp(a+sSize,b);
+      var p11=sp(a+sSize,b+sSize);
+      var p01=sp(a,b+sSize);
+      p00 = p00.concat(p00);
+      p10 = p10.concat(p10);
+      p11 = p11.concat(p11);
+      p01 = p01.concat(p01);
+      m = m.
+concat(p11).concat(p10).concat(p00).concat(p11).concat(p00).concat(p01);
+    }
+  }
+  sphereBuf = m;
+  initBuffer(sphereBuf);
+  
+  m = [];
+  SEGS=12; sSize=Math.PI*2/SEGS;
+  function cp(a) {
+    return [Math.cos(a)/13,0,Math.sin(a)/13];
+  }
+  for (var a=0; a<Math.PI*2; a+=sSize) {
+    var p00=cp(a), p10=cp(a+sSize);
+    var p01,p11;
+    p01 = p00.concat(p00); p01[1]=-1;
+    p11 = p10.concat(p10); p11[1]=-1;
+    p00 = p00.concat(p00);
+    p10 = p10.concat(p10);
+    m = m.
+concat(p11).concat(p10).concat(p00).concat(p11).concat(p00).concat(p01);
+  }
+  cylBuf = m;
+  initBuffer(cylBuf);
 }
 function initBuffer(model) {
   model.buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model), gl.STATIC_DRAW);
-  model.numVerts = model.length/9;
+  model.numVerts = model.length/6;
   model.length = 0; // delete now-unneeded vertex data
 }
 function drawBuffer(model) {
   gl.bindBuffer(gl.ARRAY_BUFFER, model.buffer);
-  gl.vertexAttribPointer(shader.inVertLoc, 3, gl.FLOAT, false, 4*9,0);
-  gl.vertexAttribPointer(shader.inColorLoc, 3, gl.FLOAT, false, 4*9,4*3);
-  gl.vertexAttribPointer(shader.inNormLoc, 3, gl.FLOAT, false, 4*9,4*6);
+  gl.vertexAttribPointer(shader.inVertLoc, 3, gl.FLOAT, false, 4*6,0);
+  gl.vertexAttribPointer(shader.inNormLoc, 3, gl.FLOAT, false, 4*6,4*3);
   gl.drawArrays(gl.TRIANGLES, 0, model.numVerts);
 }
 
-function normAng(a) {
-  var a2 = a%(Math.PI*2);
-  if (a<0) a2 += Math.PI*2;
-  return a2;
-}
-function moveTowardsA(obj,prop, set, rate) {
-  var d = normAng(obj[prop]-set);
-  var ad = Math.abs(d);
-  if (ad<rate || ad>Math.PI*2-rate)
-    obj[prop] = set;
-  else
-    obj[prop] += d>Math.PI? rate : -rate;
-}
-
-var ws;
 function initGame() {
-  ws = new WebSocket("ws://qxznet.herokuapp.com/");
-  ws.binaryType = "arraybuffer";
-  ws.onopen = function(event) {
-    alert("open!");
-  }
-  ws.onmessage = function(event) {
-    // process message
-    var arr = readFloats(event.data);
-    var n = Math.floor(arr.length/6);
-    for (var i=0; i<n; i++) {
-      if (!tenks[i])
-        tenks[i] = newTenk(tenkTypes[0],0,0,0);
-      tenks[i].pos[0] = arr[i*6+0];
-      tenks[i].pos[1] = arr[i*6+1];
-      tenks[i].pos[2] = arr[i*6+2];
-      tenks[i].a      = arr[i*6+3];
-      tenks[i].ta     = arr[i*6+4];
-      tenks[i].ga     = arr[i*6+5];
-    }
-    // send response
-    var t = myTenk;
-    sendFloats([t.pos[0],t.pos[1],t.pos[2],t.a,t.ta,t.ga]);
-  }
-  ws.onclose = function(event) {
-    alert("closed: "+event.code);
-  }
-  ws.onerror = function(event) {
-    alert("error!");
-  }
-  myTenk = newTenk(tenkTypes[0], 0, 0, 0);
-}
-function sendFloats(arr) {
-  var buf = new ArrayBuffer(arr.length*4);
-  var floats = new Float32Array(buf);
-  for (var i=0; i<floats.length; i++)
-    floats[i] = arr[i];
-  ws.send(buf);
-}
-function readFloats(data) {
-  return Array.from(new Float32Array(data));
+  quat.rotateX(camRot,camRot,0.4);
+  quat.rotateY(camRot,camRot,-0.5);
 }
 
-var camY=0, camP=-0.5;
+function setColor(r,g,b) {
+  gl.uniform3fv(shader.colorLoc, [r,g,b]);
+}
+function atom(p,y) {
+  pushMM();
+  mat4.rotateY(modelM,modelM, y);
+  mat4.rotateX(modelM,modelM, p);
+  mat4.translate(modelM,modelM, [0,1,0]);
+  setModelM();
+  setColor(0.7,0.7,0.7);
+  drawBuffer(cylBuf);
+  var s = 0.4;
+  mat4.scale(modelM,modelM, [s,s,s]);
+  setModelM();
+  setColor(1,1,1);
+  drawBuffer(sphereBuf);
+  popMM();
+}
+
+var camRot = quat.create();
 var lastTime = null;
+var bonds = 4, sites = 4;
 function drawFrame(time) {try{
   if (!lastTime) lastTime = time;
   var rdt = (time-lastTime)/1000, dt = rdt;
@@ -385,33 +333,38 @@ function drawFrame(time) {try{
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   // view transform
   mat4.identity(viewM);
-  mat4.translate(viewM,viewM, [0,0,-15]);
-  mat4.rotateX(viewM,viewM, -camP);
-  mat4.rotateY(viewM,viewM, -camY);
-  mat4.translate(viewM,viewM, vec3.negate([],myTenk.type.model.gunTrans));
-  mat4.translate(viewM,viewM, vec3.negate([],myTenk.pos));
+  mat4.translate(viewM,viewM, [0,0,-6]);
+  var rotM = mat4.fromQuat([],camRot);
+  mat4.mul(viewM,viewM,rotM);
   gl.uniformMatrix4fv(shader.viewMLoc, false, viewM);
   
   mat4.identity(modelM);
   setModelM();
   
-  gl.uniform3fv(shader.lightDirLoc, vec3.normalize([],[1,3,2]));
+  gl.uniform3fv(shader.lightDirLoc, vec3.transformMat4([],vec3.normalize([],[-2,2,1]),mat4.invert([],rotM)));
   
-  drawBuffer(terrain.model);
-  for (var i in tenks) {
-    tenks[i].draw();
+  setColor(1,1,0);
+  pushMM();
+  mat4.scale(modelM,modelM, [0.6,0.6,0.6]);
+  setModelM();
+  drawBuffer(sphereBuf);
+  popMM();
+  var pi = Math.PI;
+  var tetA = 2*Math.atan(Math.SQRT2);
+  var atoms = [
+    [[0,0],[pi,0]],
+    [[0,0],[pi*2/3,pi/2],[pi*4/3,pi/2]],
+    [[0,0],[tetA,0],[tetA,pi*2/3],[tetA,pi*4/3]],
+    [[0,0],[pi,0],[pi/2,0],[pi/2,pi*2/3],[pi/2,pi*4/3]],
+    [[0,0],[pi,0],[pi/2,0],[pi/2,pi],[pi/2,pi/2],[pi/2,pi*3/2]],
+  ];
+  for (var b=0; b<bonds; b++) {
+    var a = atoms[sites-2][b];
+    atom(a[0],a[1]);
   }
-  myTenk.draw();
-  myTenk.a -= joyX*1*dt;
-  var dr = joyY*5*dt;
-  vec3.add(myTenk.pos,myTenk.pos,[dr*Math.sin(myTenk.a),0,dr*Math.cos(myTenk.a)]);
-  moveTowardsA(myTenk,"ta",camY-myTenk.a,myTenk.type.tSpd*dt);
-  moveTowardsA(myTenk,"ga",camP+0.3,myTenk.type.gSpd*dt);
   
   var err = gl.getError();
   if (err==0) requestAnimationFrame(drawFrame);
   else alert("GL error: "+err);
 }catch(e){alert("drawFrame: "+e.message)}}
-
-
 
