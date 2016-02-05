@@ -18,6 +18,21 @@ window.addEventListener('load', function(e) {try{
   gl = canvas.getContext('experimental-webgl');
   initGL();
   initGame();
+  window.addEventListener("mousedown", function(event) {
+    event = event||window.event;
+    event.preventDefault();
+    touchStart(event.clientX, event.clientY, 0);
+  }, false);
+  window.addEventListener("mousemove", function(event) {
+    event = event||window.event;
+    event.preventDefault();
+    touchMove(event.clientX, event.clientY, 0);
+  }, false);
+  window.addEventListener("mouseup", function(event) {
+    event = event||window.event;
+    event.preventDefault();
+    touchEnd(event.clientX, event.clientY, 0);
+  }, false);
   window.addEventListener("touchstart", function(event) {
     event.preventDefault();
     var ts = event.changedTouches;
@@ -74,7 +89,7 @@ function setSitesText() {
   setText("sites2",sites);
   setText("edgName",edgNames[sites-2]);
 }
-function touchStart(tx, ty, tid) {alert(tx+" "+ty)
+function touchStart(tx, ty, tid) {
   if (ty>canvas.height*0.85) {
     if (tx>canvas.width/2) bonds++;
     else bonds--;
