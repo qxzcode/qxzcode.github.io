@@ -18,10 +18,26 @@ window.addEventListener('load', function(e) {try{
   gl = canvas.getContext('experimental-webgl');
   initGL();
   initGame();
-  window.addEventListener("touchstart", touchStart, false);
-  window.addEventListener("touchmove", touchMove, false);
-  window.addEventListener("touchend", touchEnd, false);
-  window.addEventListener("touchcancel", touchEnd, false);
+  window.addEventListener("touchstart", function(event) {
+    event.preventDefault();
+    var ts = event.changedTouches;
+    for (var i=0;i<ts.length;i++)
+      touchStart(ts[i].pageX, ts[i].pageY. ts[i].identifier);
+  }, false);
+  window.addEventListener("touchmove", function(event) {
+    event.preventDefault();
+    var ts = event.changedTouches;
+    for (var i=0;i<ts.length;i++)
+      touchMove(ts[i].pageX, ts[i].pageY. ts[i].identifier);
+  }, false);
+  function tEnd(event) {
+    event.preventDefault();
+    var ts = event.changedTouches;
+    for (var i=0;i<ts.length;i++)
+      touchEnd(ts[i].pageX, ts[i].pageY. ts[i].identifier);
+  }
+  window.addEventListener("touchend", tEnd, false);
+  window.addEventListener("touchcancel", tEnd, false);
   document.body.style.fontSize = canvas.height+"px";
   setSitesText();
   requestAnimationFrame(drawFrame);
@@ -58,56 +74,41 @@ function setSitesText() {
   setText("sites2",sites);
   setText("edgName",edgNames[sites-2]);
 }
-function touchStart(event) {
-  event.preventDefault();
-  var touches = event.changedTouches;
-  for (var i=0;i<touches.length;i++) {
-    var tx=touches[i].pageX, ty=touches[i].pageY;
-    var tid = touches[i].identifier;
-    if (ty>canvas.height*0.85) {
-      if (tx>canvas.width/2) bonds++;
-      else bonds--;
-      if (bonds<1) bonds=1;
-      if (bonds>sites) bonds=sites;
-      setBondsText();
-    } else if (ty<canvas.height*0.15) {
-      var d = sites-bonds;
-      if (tx>canvas.width/2) sites++;
-      else sites--;
-      if (sites<2) sites=2;
-      if (sites>6) sites=6;
-      bonds = sites-d;
-      if (bonds<1) bonds=1;
-      setSitesText();
-    } else {
-      camPanTouch = tid;
-      lastCTX = tx;
-      lastCTY = ty;
-    }
+function touchStart(tx, ty, tid) {
+  if (ty>canvas.height*0.85) {
+    if (tx>canvas.width/2) bonds++;
+    else bonds--;
+    if (bonds<1) bonds=1;
+    if (bonds>sites) bonds=sites;
+    setBondsText();
+  } else if (ty<canvas.height*0.15) {
+    var d = sites-bonds;
+    if (tx>canvas.width/2) sites++;
+    else sites--;
+    if (sites<2) sites=2;
+    if (sites>6) sites=6;
+    bonds = sites-d;
+    if (bonds<1) bonds=1;
+    setSitesText();
+  } else {
+    camPanTouch = tid;
+    lastCTX = tx;
+    lastCTY = ty;
   }
 }
-function touchMove(event) {
-  event.preventDefault();
-  var touches = event.changedTouches;
-  for (var i=0;i<touches.length;i++) {
-    var tx=touches[i].pageX, ty=touches[i].pageY;
-    var tid = touches[i].identifier;
-    if (tid==camPanTouch) {
-      var tmp = quat.create();
-      quat.rotateY(tmp,tmp,(tx-lastCTX)/canvas.height*45*0.1);
-      quat.rotateX(tmp,tmp,(ty-lastCTY)/canvas.height*45*0.1);
-      quat.mul(camRot,tmp,camRot);
-      lastCTX = tx;
-      lastCTY = ty;
-    }
+function touchMove(tx, ty, tid) {
+  if (tid==camPanTouch) {
+    var tmp = quat.create();
+    quat.rotateY(tmp,tmp,(tx-lastCTX)/canvas.height*45*0.1);
+    quat.rotateX(tmp,tmp,(ty-lastCTY)/canvas.height*45*0.1);
+    quat.mul(camRot,tmp,camRot);
+    lastCTX = tx;
+    lastCTY = ty;
   }
 }
-function touchEnd(event) {
-  event.preventDefault();
-  var touches = event.changedTouches;
-  for (var i=0;i<touches.length;i++) {
-    var tid = touches[i].identifier;
-    
+function touchEnd(tx, ty, tid) {
+  if (tid==camPanTouch) {
+    camPanTouch = null;
   }
 }
 
@@ -367,4 +368,3 @@ function drawFrame(time) {try{
   if (err==0) requestAnimationFrame(drawFrame);
   else alert("GL error: "+err);
 }catch(e){alert("drawFrame: "+e.message)}}
-
