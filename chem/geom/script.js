@@ -22,7 +22,7 @@ window.addEventListener('load', function(e) {try{
     event.preventDefault();
     var ts = event.changedTouches;
     for (var i=0;i<ts.length;i++) {
-      alert("touch "+i);try{
+      alert("touch "+ts[i]);try{
         touchStart(ts[i].pageX, ts[i].pageY. ts[i].identifier);
       }catch(exx){alert(exx.message)}
       alert("After");
