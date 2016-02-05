@@ -94,8 +94,8 @@ function touchMove(event) {
     var tid = touches[i].identifier;
     if (tid==camPanTouch) {
       var tmp = quat.create();
-      quat.rotateY(tmp,tmp,(tx-lastCTX)/canvas.height*fovy*0.1);
-      quat.rotateX(tmp,tmp,(ty-lastCTY)/canvas.height*fovy*0.1);
+      quat.rotateY(tmp,tmp,(tx-lastCTX)/canvas.height*45*0.1);
+      quat.rotateX(tmp,tmp,(ty-lastCTY)/canvas.height*45*0.1);
       quat.mul(camRot,tmp,camRot);
       lastCTX = tx;
       lastCTY = ty;
@@ -333,7 +333,7 @@ function drawFrame(time) {try{
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   // view transform
   mat4.identity(viewM);
-  mat4.translate(viewM,viewM, [0,0,-8]);
+  mat4.translate(viewM,viewM, [0,0,-6]);
   var rotM = mat4.fromQuat([],camRot);
   mat4.mul(viewM,viewM,rotM);
   gl.uniformMatrix4fv(shader.viewMLoc, false, viewM);
