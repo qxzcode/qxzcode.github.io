@@ -1,0 +1,57 @@
+@charset "UTF-8";
+
+body {
+  background-color: #333;
+  color: white;
+  font-family: helvetica;
+  padding: 0em;
+  margin: 0em;
+}
+
+#content {
+  font-size: 3%;
+  padding: 0em;
+}
+
+h1 {
+  text-align: center;
+}
+
+.appbox {
+  background-color: #444;
+  margin: 1em;
+  padding: 1em;
+  border-radius: 1.5em;
+  height: 5em;
+  color: white;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.icon {
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.apptext {
+  flex-shrink: 1;
+  padding-left: 1em;
+}
+
+h3 {
+  padding: 0em;
+  margin: 0em;
+  margin-bottom: 0.5em;
+  text-decoration: underline;
+}
+
+#sign {
+  left: 80%;
+  top: 96%;
+  color: #555;
+  font-size: 2%;
+  width: 18%;
+  text-align: right;
+  position: absolute;
+}
