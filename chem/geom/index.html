@@ -11,8 +11,8 @@
 @charset "UTF-8";
 
 body, canvas {
-  margin: 0px;
-  padding: 0px;
+  margin: 0em;
+  padding: 0em;
   background-color: #444;
 }
 div {
@@ -25,7 +25,7 @@ div {
 p {
   font-size: 40%;
   margin: 0px;
-  margin-top: 3px;
+  margin-top: 0.2em;
 }
 .b {
   font-size: 3%;
@@ -65,6 +65,88 @@ p {
   width: 18%;
   text-align: right;
 }
+#lewis {
+  left: 20%;
+  top: 50%;
+  font-size: 6%;
+  width: 6em;
+  margin-left: -3em;
+  height: 6em;
+  margin-top: -3em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  //background-color: blue;
+}
+#rightB,#leftB,#right2B,#left2B,#upB,#downB,#rightN,#leftN,#right2N,#left2N,#upN,#downN {
+  background-color: white;
+  font-size: 9%;
+  margin: 2em;
+  display: none;
+}
+#rightN,#leftN,#right2N,#left2N,#upN,#downN {
+  background-color: rgba(0,0,0,0);
+}
+#rightB,#leftB,#right2B,#left2B,#rightN,#leftN,#right2N,#left2N {
+  width: 7em;
+  height: 1em;
+}
+#upB,#downB,#upN,#downN {
+  width: 1em;
+  height: 7em;
+}
+#upDc,#downDc,#leftDc,#rightDc,#left2Dc,#right2Dc {
+  font-size: 9%;
+  margin: 2em;
+  display: none;
+  justify-content: center;
+}
+#upDc,#downDc {
+  width: 1em;
+  height: 7em;
+}
+#leftDc,#rightDc,#left2Dc,#right2Dc {
+  width: 7em;
+  height: 1em;
+  flex-direction: column;
+}
+#upDc,#leftDc,#left2Dc {align-items: flex-end;}
+#downDc,#rightDc,#right2Dc {align-items: flex-start;}
+#leftB,#leftDc,#left2B,#left2Dc {
+  transform-origin: 12.33em;
+  -webkit-transform-origin: 12.33em;
+  -ms-transform-origin: 12.33em;
+  -moz-transform-origin: 12.33em;
+}
+#rightB,#rightDc,#right2B,#right2Dc {
+  transform-origin: -5.33em;
+  -webkit-transform-origin: -5.33em;
+  -ms-transform-origin: -5.33em;
+  -moz-transform-origin: -5.33em;
+}
+.dot {
+  background-color: white;
+  font-size: 140%;
+  margin: 0.6em;
+  width: 1em;
+  height: 1em;
+  border-radius: 1em;
+  flex-shrink: 0;
+}
+#vert {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+#e {
+  width: 1em;
+  margin: -0.2em;
+}
+span {
+  //background-color: green;
+}
   </style>
   <script src="script.js"></script>
 </head>
@@ -75,6 +157,7 @@ p {
   <div class="b" id="b00">&ndash; bond</div>
   <div class="b" id="b11">+ site</div>
   <div class="b" id="b01">&ndash; site</div>
+  <div id="lewis" id="b01"><span id="left2Dc"><span class="dot"></span><span class="dot"></span></span><span id="left2N"></span><span id="left2B"></span><span id="leftDc"><span class="dot"></span><span class="dot"></span></span><span id="leftN"></span><span id="leftB"></span><span id="vert"><span id="upDc"><span class="dot"></span><span class="dot"></span></span><span id="upN"></span><span id="upB"></span><span id="e">A</span><span id="downDc"><span class="dot"></span><span class="dot"></span></span><span id="downN"></span><span id="downB"></span></span><span id="rightDc"><span class="dot"></span><span class="dot"></span></span><span id="rightN"></span><span id="rightB"></span><span id="right2Dc"><span class="dot"></span><span class="dot"></span></span><span id="right2N"></span><span id="right2B"></span></div>
   <div id="sign">by Quinn Tucker '18</div>
   <canvas id="c">ur browzr iz b dum</canvas>
 </body>
