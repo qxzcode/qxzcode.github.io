@@ -1,4 +1,3 @@
-
 // glMatrix v2.3.2
 // Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
@@ -13,8 +12,11 @@ return t[0]=-n*e,t[1]=-r*e,t[2]=-o*e,t[3]=l*e,t},e.conjugate=function(t,a){retur
 
 var canvas;
 var gl;
+function getE(id) {
+  return document.getElementById(id);
+}
 window.addEventListener('load', function(e) {try{
-  canvas = document.getElementById('c');
+  canvas = getE("c");
   gl = canvas.getContext('experimental-webgl');
   initGL();
   initGame();
@@ -63,7 +65,29 @@ var fovy = 45;
 var camPanTouch=null, joyTouch=null;
 var lastCTX, lastCTY;
 function setText(id,text) {
-  document.getElementById(id).innerText = text;
+  getE(id).innerText = text;
+}
+function setShown(id,b) {
+  getE(id).style.display = b?"flex":"none";
+}
+function setRotation(id,a,left,two) {
+  var trans = a==0?"":(two?"translateX("+(left?"":"-")+"11em) ":"")+"rotate("+a+"deg) translateX("+(left?"-":"")+"1.5em)";
+  var s = getE(id).style;
+  s.transform = trans;
+  s.webkitTransform = trans;
+  s.msTransform = trans;
+  s.mozTransform = trans;
+}
+function setSiteRotation(left,two) {
+  var a = sites==5? left?two?-54:18:two?54:-18 : sites==6? (two?-30:30) : 0;
+  var id = (left?"left":"right")+(two?"2":"");
+  setRotation(id+"B",a,left,two);
+  setRotation(id+"Dc",a,left,two);
+}
+function setLewisSite(dir,n) {
+  setShown(dir+"N",n==0);
+  setShown(dir+"Dc",n==1);
+  setShown(dir+"B",n==2);
 }
 var edgNames = [
   "Linear",
@@ -75,13 +99,24 @@ var edgNames = [
 var mgNames = [
   ["Linear","Linear"],
   ["Linear","Bent","Trigonal planar"],
-  ["Linear","Bent","Trigonal pyramidial","Tetrahedral"],
+  ["Linear","Bent","Trigonal pyramidal","Tetrahedral"],
   ["Linear","Linear","T-shaped","Seesaw","Trigonal bipyramidal"],
   ["Linear","Linear","T-shaped","Square planar","Square pyramidal","Octahedral"],
 ];
 function setBondsText() {
   setText("bonds",bonds);
   setText("mgName",mgNames[sites-2][bonds-1]);
+  
+  setLewisSite("up",2);
+  setLewisSite("down",sites==5?0:bonds>1?2:1);
+  setLewisSite("left",sites<3?0:bonds>2?2:1);
+  setLewisSite("right",sites<4?0:bonds>3?2:1);
+  setLewisSite("left2",sites<5?0:bonds>(sites==5?1:4)?2:1);
+  setLewisSite("right2",sites<5?0:bonds>sites-1?2:1);
+  setSiteRotation(true,false);
+  setSiteRotation(true,true);
+  setSiteRotation(false,false);
+  setSiteRotation(false,true);
 }
 function setSitesText() {
   setBondsText();
