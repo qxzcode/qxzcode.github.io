@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width" />
+  <title>CoH Master</title>
+  <style>
+@charset "UTF-8";
+
+body {
+  font-family: helvetica;
+}
+h4 {
+  color: gray;
+}
+h1,h4 {
+  text-align: center;
+}
+
+textarea {
+  width: 100%;
+  font-family: courier;
+  tab-size: 4;
+}
+  </style>
+  <script>
+function parse() {try{
+  var str = document.getElementById("in").value;
+  
+  /* parse lines into data */
+  var award, awardType, scout=true;
+  var data = {};
+  var lines = str.split("\n");
+  for (var li in lines) {
+    var line = lines[li].trim(), lline = line.toLowerCase();
+    if (line=="") continue;
+    if (/^\d+\/\d+\/\d+/.test(line)) continue;
+    if (/^troop \d+ court of honor/i.test(line)) continue;
+    if (/^[PR#]\s+-/i.test(line)) continue;
+    if (lline=="awards summary") break;
+    if (lline=="scout awards") {scout=true;continue}
+    if (lline=="adult leader awards") {scout=false;continue}
+    
+    var am = line.match(/([^*:]+?)\*?\s*:/);
+    if (am) {
+      if (!data[awardType][award=am[1]])
+        data[awardType][award] = [];
+    }
+    var nm = line.match(/(?:^|:)\s*([^:,]+),\s*(\D+?)\s+\d+\//);
+    if (nm) {
+      if (!data[awardType][award]) {
+        alert(awardType+" | "+nm);
+        return debug;
+      }
+      data[awardType][award].push({name:nm[2]+" "+nm[1],scout:scout});
+    } else {
+      if (!data[awardType=line])
+        data[awardType] = {};
+    }
+  }
+  
+  /* process data to generate report */
+  var out = "";
+  var error = "";
+  function pl(n){return n==1?"":"s"}
+  for (awardType in data) {
+    var lat = awardType.toLowerCase();
+    if (!/^(merit badges|ranks|special awards|service stars)$/.test(lat))
+      error += 'Unknown award type: "'+awardType+'"\n';
+    out += "\n== "+awardType+" ==\n\n";
+    var as = data[awardType];
+    if (lat=="merit badges") {
+      var scouts = [];
+      for (award in as) {
+        var ps=as[award];
+        for (var i in ps) {
+          if (!scouts[ps[i].name])
+            scouts[ps[i].name] = [];
+          scouts[ps[i].name].push(award);
+        }
+      }
+      var num = {};
+      for (var n in scouts) {
+        if (!num[scouts[n].length])
+          num[scouts[n].length] = [];
+        num[scouts[n].length].push({name:n,mbs:scouts[n]});
+      }
+      for (var n in num) {
+        out += num[n].length+" scout"+pl(num[n].length);
+        out += " who earned "+n+" merit badge"+pl(n)+":\n";
+        for (var i in num[n]) {
+          out += "\t"+num[n][i].name+":\n\t\t";
+          out += num[n][i].mbs.join("\n\t\t")+"\n";
+        }
+      }
+    } else {
+      for (award in as) {
+        var ps=as[award];
+        out += award+":\n";
+        var scouts=[],adults=[];
+        for (var i in ps)
+          (ps[i].scout?scouts:adults).push(ps[i].name);
+        var head="\t",body=":\n\t\t";
+        if (scouts.length>0) {
+          head += scouts.length+" scout"+pl(scouts.length);
+          if (adults.length>0) head += " and ";
+          body += scouts.join("\n\t\t")+"\n";
+        }
+        if (adults.length>0) {
+          head += adults.length+" adult"+pl(adults.length);
+          if (scouts.length>0) body += "\n\t\t";
+          body += adults.join("\n\t\t")+"\n";
+        }
+        out += head+body+"\n";
+      }
+    }
+  }
+ 
+  /* output the result */
+  if (error!="")
+    out = "There were error(s) while parsing the file; the output may not be valid.\n"+error+"\n"+out;
+  document.getElementById("out").value = out;
+  document.getElementById("link").innerHTML='<a href="data:text/plain,'+encodeURIComponent(out)+'" target="_blank">Output file</a><br>';
+}catch(e){alert("Serious error: "+e.message)}}
+  </script>
+</head>
+<body>
+  <h1>CoH Master</h1>
+  <h4>by Quinn Tucker</h4>
+  Paste the contents of the file here:<br>
+  <textarea rows="10" id="in"></textarea><br>
+  <button onclick="parse()">Parse it!</button><br>
+  Output:<br>
+  <span id="link"></span>
+  <textarea rows="10" id="out"></textarea>
+</body>
+</html>
