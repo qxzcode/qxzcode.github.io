@@ -9,18 +9,51 @@
 
 body {
   font-family: helvetica;
+  background-color: #DDD;
 }
 h4 {
-  color: gray;
+  color: #555;
 }
-h1,h4 {
+h1,h4,h3 {
   text-align: center;
+  margin: 10px;
+}
+#link {
+  color: black;
+  font-weight: normal;
+  margin: 1px;
+}
+h3 {
+  margin-top: 15px;
+  margin-bottom: 1px;
 }
 
+#outdiv {
+  display: none;
+}
+input {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+label {
+  cursor: pointer;
+  color: white;
+  background-color: #22E;
+  font-weight: bold;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 6px;
+  display: inline-block;
+}
 textarea {
   width: 100%;
   font-family: courier;
   tab-size: 4;
+  padding: 5px;
 }
   </style>
   <script>
@@ -42,7 +75,7 @@ function parse() {try{
     if (lline=="adult leader awards") {scout=false;continue}
     
     var am = line.match(/([^*:]+?)\*?\s*:/);
-    if (am) {
+    if (am && awardType) {
       if (!data[awardType][award=am[1]])
         data[awardType][award] = [];
     }
@@ -121,18 +154,20 @@ function parse() {try{
   if (error!="")
     out = "There were error(s) while parsing the file; the output may not be valid.\n"+error+"\n"+out;
   document.getElementById("out").value = out;
-  document.getElementById("link").innerHTML='<a href="data:text/plain,'+encodeURIComponent(out)+'" target="_blank">Output file</a><br>';
+  document.getElementById("link").innerHTML='(<a href="data:text/plain,'+encodeURIComponent(out)+'" target="_blank">File for saving</a>)<br>';
+  document.getElementById("outdiv").style.display = "initial";
 }catch(e){alert("Serious error: "+e.message)}}
 
 function onFile(ele) {
   var file = ele.files[0];
   if (file.type!="text/plain") {
-    alert("Please choose a plain text file.");
+    alert("Please choose a plain text (.txt) file");
     return;
   }
   var fr = new FileReader();
   fr.onload = function() {
     document.getElementById("in").value = fr.result;
+    parse();
   };
   fr.readAsText(file);
 }
@@ -141,12 +176,13 @@ function onFile(ele) {
 <body>
   <h1>CoH Master</h1>
   <h4>by Quinn Tucker</h4>
-  Paste the contents of the file here:<br>
-  <input type="file" onchange="onFile(this)"/><br>
-  <textarea rows="10" id="in"></textarea><br>
-  <button onclick="parse()">Parse it!</button><br>
-  Output:<br>
-  <span id="link"></span>
-  <textarea rows="10" id="out"></textarea>
+  <input type="file" id="file" onchange="onFile(this)"/>
+  <label for="file">Choose a file</label><br>
+  <textarea rows="10" id="in" oninput="parse()" placeholder="Or paste the text here!"></textarea><br>
+  <div id="outdiv">
+  <h3>Output</h3>
+  <h4 id="link"></h4><br>
+  <textarea rows="25" id="out"></textarea>
+  </div>
 </body>
 </html>
