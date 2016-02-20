@@ -92,6 +92,7 @@ function parse() {try{
           out += "\t"+num[n][i].name+":\n\t\t";
           out += num[n][i].mbs.join("\n\t\t")+"\n";
         }
+        out += "\n";
       }
     } else {
       for (award in as) {
@@ -122,12 +123,26 @@ function parse() {try{
   document.getElementById("out").value = out;
   document.getElementById("link").innerHTML='<a href="data:text/plain,'+encodeURIComponent(out)+'" target="_blank">Output file</a><br>';
 }catch(e){alert("Serious error: "+e.message)}}
+
+function onFile(ele) {
+  var file = ele.files[0];
+  if (file.type!="text/plain") {
+    alert("Please choose a plain text file.");
+    return;
+  }
+  var fr = new FileReader();
+  fr.onload = function() {
+    document.getElementById("in").value = fr.result;
+  };
+  fr.readAsText(file);
+}
   </script>
 </head>
 <body>
   <h1>CoH Master</h1>
   <h4>by Quinn Tucker</h4>
   Paste the contents of the file here:<br>
+  <input type="file" onchange="onFile(this)"/><br>
   <textarea rows="10" id="in"></textarea><br>
   <button onclick="parse()">Parse it!</button><br>
   Output:<br>
