@@ -130,6 +130,10 @@ function parse() {try{
     } else {
       for (award in as) {
         var ps=as[award];
+        if (lat=="service stars") {
+          var m = award.match(/(\d+)\s+year/i);
+          if (m) award = parseInt(m[1])+" year"+pl(parseInt(m[1]));
+        }
         out += award+":\n";
         var scouts=[],adults=[];
         for (var i in ps)
