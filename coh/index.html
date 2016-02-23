@@ -64,38 +64,63 @@ function parse() {try{
   var award, awardType, scout=true;
   var data = {};
   var lines = str.split("\n");
+  var error = "";
+  var reportType;
   for (var li in lines) {
     var line = lines[li].trim(), lline = line.toLowerCase();
     if (line=="") continue;
     if (/^\d+\/\d+\/\d+/.test(line)) continue;
-    if (/^troop \d+ court of honor/i.test(line)) continue;
-    if (/^[PR#]\s+-/i.test(line)) continue;
-    if (lline=="awards summary") break;
-    if (lline=="scout awards") {scout=true;continue}
-    if (lline=="adult leader awards") {scout=false;continue}
-    
-    var am = line.match(/([^*:]+?)\*?\s*:/);
-    if (am && awardType) {
-      if (!data[awardType][award=am[1]])
-        data[awardType][award] = [];
+    if (/^troop \d+ court of honor/i.test(line)) {
+      if (reportType&&reportType!=1) {error+="Conflicting report type information\n";break}
+      reportType=1;
+      continue;
     }
-    var nm = line.match(/(?:^|:)\s*([^:,]+),\s*(\D+?)\s+\d+\//);
-    if (nm) {
-      if (!data[awardType][award]) {
-        alert(awardType+" | "+nm);
-        return debug;
+    if (/^troop \d+ - individual/i.test(line)) {
+      if (reportType&&reportType!=2) {error+="Conflicting report type information\n";break}
+      reportType=2;
+      data.scouts=[];
+      data.adults=[];
+      continue;
+    }
+    
+    if (reportType==1) {
+      if (/^[PR#]\s+-/i.test(line)) continue;
+      if (lline=="awards summary") break;
+      if (lline=="scout awards") {scout=true;continue}
+      if (lline=="adult leader awards") {scout=false;continue}
+      
+      var am = line.match(/([^*:]+?)\*?\s*:/);
+      if (am && awardType) {
+        if (!data[awardType][award=am[1]])
+          data[awardType][award] = [];
       }
-      data[awardType][award].push({name:nm[2]+" "+nm[1],scout:scout});
+      var nm = line.match(/(?:^|:)\s*([^:,]+),\s*(\D+?)\s+\d+\//);
+      if (nm) {
+        if (!data[awardType]||!data[awardType][award]) {
+          error += 'Name before award: "'+nm[1]+', '+nm[2]+'"\n';
+          continue;
+        }
+        data[awardType][award].push({name:nm[2]+" "+nm[1],scout:scout});
+      } else {
+        if (!data[awardType=line])
+          data[awardType] = {};
+      }
+    } else if (reportType==2) {
+      if (/scouts? attended/i.test(line)) {scout=true;continue}
+      if (/adults? attended/i.test(line)) {scout=false;continue}
+      var rx = /((?:[a-z]+ ?)+), ((?:[a-z]+ ?)+)/gi, m;
+      while (m=rx.exec(line))
+        (scout?data.scouts:data.adults).push(m[1]+","+m[2]);
     } else {
-      if (!data[awardType=line])
-        data[awardType] = {};
+      error += "Could not detect report type\n";
+      break;
     }
   }
   
   /* process data to generate report */
   var out = "";
-  var error = "";
   function pl(n){return n==1?"":"s"}
+  if (reportType==1)
   for (awardType in data) {
     var lat = awardType.toLowerCase();
     if (!/^(merit badges|ranks|special awards|service stars)$/.test(lat))
@@ -153,10 +178,26 @@ function parse() {try{
       }
     }
   }
+  else if (reportType==2) {
+    var head="",body=":\n\t";
+    function swapName(n) {var p=n.split(",");return p[1]+" "+p[0]}
+    var scouts=data.scouts.sort().map(swapName), adults=data.adults.sort().map(swapName);
+    if (scouts.length>0) {
+      head += scouts.length+" scout"+pl(scouts.length);
+      if (adults.length>0) head += " and ";
+      body += scouts.join("\n\t")+"\n";
+    }
+    if (adults.length>0) {
+      head += adults.length+" adult"+pl(adults.length);
+      if (scouts.length>0) body += "\n\t";
+      body += adults.join("\n\t")+"\n";
+    }
+    out += head+body+"\n";
+  } else error += "Could not detect report type\n";
  
   /* output the result */
   if (error!="")
-    out = "There were error(s) while parsing the file; the output may not be valid.\n"+error+"\n"+out;
+    out = "There were error(s) while parsing the file; the output may not be valid:\n"+error+"\n"+out;
   document.getElementById("out").value = out;
   document.getElementById("link").innerHTML='(<a href="data:text/plain,'+encodeURIComponent(out)+'" target="_blank">File for saving</a>)<br>';
   document.getElementById("outdiv").style.display = "initial";
