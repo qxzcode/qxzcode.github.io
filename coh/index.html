@@ -57,9 +57,7 @@ textarea {
 }
   </style>
   <script>
-function parse() {try{
-  var str = document.getElementById("in").value;
-  
+function parseFile(str) {
   /* parse lines into data */
   var award, awardType, scout=true;
   var data = {};
@@ -110,75 +108,110 @@ function parse() {try{
       if (/adults? attended/i.test(line)) {scout=false;continue}
       var rx = /((?:[a-z]+ ?)+), ((?:[a-z]+ ?)+)/gi, m;
       while (m=rx.exec(line))
-        (scout?data.scouts:data.adults).push(m[1]+","+m[2]);
+        (scout?data.scouts:data.adults).push(m[1].trim()+","+m[2].trim());
     } else {
       error += "Could not detect report type\n";
       break;
     }
   }
   
-  /* process data to generate report */
-  var out = "";
-  function pl(n){return n==1?"":"s"}
-  if (reportType==1)
-  for (awardType in data) {
-    var lat = awardType.toLowerCase();
-    if (!/^(merit badges|ranks|special awards|service stars)$/.test(lat))
-      error += 'Unknown award type: "'+awardType+'"\n';
-    out += "\n== "+awardType+" ==\n\n";
-    var as = data[awardType];
-    if (lat=="merit badges") {
-      var scouts = [];
-      for (award in as) {
-        var ps=as[award];
-        for (var i in ps) {
-          if (!scouts[ps[i].name])
-            scouts[ps[i].name] = [];
-          scouts[ps[i].name].push(award);
-        }
-      }
-      var num = {};
-      for (var n in scouts) {
-        if (!num[scouts[n].length])
-          num[scouts[n].length] = [];
-        num[scouts[n].length].push({name:n,mbs:scouts[n]});
-      }
-      for (var n in num) {
-        out += num[n].length+" scout"+pl(num[n].length);
-        out += " who earned "+n+" merit badge"+pl(n)+":\n";
-        for (var i in num[n]) {
-          out += "\t"+num[n][i].name+":\n\t\t";
-          out += num[n][i].mbs.join("\n\t\t")+"\n";
-        }
-        out += "\n";
-      }
+  return {reportType:reportType, data:data, error:error};
+}
+
+function parse(files) {try{
+  /* parse each file */
+  var arr = [];
+  var error = "";
+  for (var i in files) {
+    var f = files[i];
+    arr.push(parseFile(f.content));
+  }
+  
+  /* combine the results */
+  var reportType;
+  var data;
+  for (var ai in arr) {
+    var res = arr[ai];
+    error += res.error;
+    if (!data) {
+      reportType = res.reportType;
+      data = res.data;
     } else {
-      for (award in as) {
-        var ps=as[award];
-        if (lat=="service stars") {
-          var m = award.match(/(\d+)\s+year/i);
-          if (m) award = parseInt(m[1])+" year"+pl(parseInt(m[1]));
+      if (res.reportType != reportType) {
+        error += "Report types do not match\n";
+      } else if (reportType==2) {
+        function merge(a,b) {
+          for (var i in b)
+            if (a.indexOf(b[i])==-1) a.push(b[i]);
         }
-        out += award+":\n";
-        var scouts=[],adults=[];
-        for (var i in ps)
-          (ps[i].scout?scouts:adults).push(ps[i].name);
-        var head="\t",body=":\n\t\t";
-        if (scouts.length>0) {
-          head += scouts.length+" scout"+pl(scouts.length);
-          if (adults.length>0) head += " and ";
-          body += scouts.join("\n\t\t")+"\n";
-        }
-        if (adults.length>0) {
-          head += adults.length+" adult"+pl(adults.length);
-          if (scouts.length>0) body += "\n\t\t";
-          body += adults.join("\n\t\t")+"\n";
-        }
-        out += head+body+"\n";
+        merge(data.scouts,res.data.scouts);
+        merge(data.adults,res.data.adults);
       }
     }
   }
-  else if (reportType==2) {
+  
+  /* process data to generate report */
+  var out = "";
+  function pl(n){return n==1?"":"s"}
+  if (reportType==1) {
+    for (awardType in data) {
+      var lat = awardType.toLowerCase();
+      if (!/^(merit badges|ranks|special awards|service stars)$/.test(lat))
+        error += 'Unknown award type: "'+awardType+'"\n';
+      out += "\n== "+awardType+" ==\n\n";
+      var as = data[awardType];
+      if (lat=="merit badges") {
+        var scouts = [];
+        for (award in as) {
+          var ps=as[award];
+          for (var i in ps) {
+            if (!scouts[ps[i].name])
+              scouts[ps[i].name] = [];
+            scouts[ps[i].name].push(award);
+          }
+        }
+        var num = {};
+        for (var n in scouts) {
+          if (!num[scouts[n].length])
+            num[scouts[n].length] = [];
+          num[scouts[n].length].push({name:n,mbs:scouts[n]});
+        }
+        for (var n in num) {
+          out += num[n].length+" scout"+pl(num[n].length);
+          out += " who earned "+n+" merit badge"+pl(n)+":\n";
+          for (var i in num[n]) {
+            out += "\t"+num[n][i].name+":\n\t\t";
+            out += num[n][i].mbs.join("\n\t\t")+"\n";
+          }
+          out += "\n";
+        }
+      } else {
+        for (award in as) {
+          var ps=as[award];
+          if (lat=="service stars") {
+            var m = award.match(/(\d+)\s+year/i);
+            if (m) award = parseInt(m[1])+" year"+pl(parseInt(m[1]));
+          }
+          out += award+":\n";
+          var scouts=[],adults=[];
+          for (var i in ps)
+            (ps[i].scout?scouts:adults).push(ps[i].name);
+          var head="\t",body=":\n\t\t";
+          if (scouts.length>0) {
+            head += scouts.length+" scout"+pl(scouts.length);
+            if (adults.length>0) head += " and ";
+            body += scouts.join("\n\t\t")+"\n";
+          }
+          if (adults.length>0) {
+            head += adults.length+" adult"+pl(adults.length);
+            if (scouts.length>0) body += "\n\t\t";
+            body += adults.join("\n\t\t")+"\n";
+          }
+          out += head+body+"\n";
+        }
+      }
+    }
+  } else if (reportType==2) {
     var head="",body=":\n\t";
     function swapName(n) {var p=n.split(",");return p[1]+" "+p[0]}
     var scouts=data.scouts.sort().map(swapName), adults=data.adults.sort().map(swapName);
@@ -193,38 +226,44 @@ function parse() {try{
       body += adults.join("\n\t")+"\n";
     }
     out += head+body+"\n";
-  } else error += "Could not detect report type\n";
+  }// else error += "Could not detect report type\n";
  
   /* output the result */
   if (error!="")
-    out = "There were error(s) while parsing the file; the output may not be valid:\n"+error+"\n"+out;
+    out = "There were error(s) while parsing the file(s); the output may not be valid:\n"+error+"\n"+out;
   out = out.replace(/\n/g,"\r\n");
   document.getElementById("out").value = out;
-  document.getElementById("link").innerHTML='(<a href="data:text/plain,'+encodeURIComponent(out)+'" target="_blank">File for saving</a>)<br>';
+  document.getElementById("link").innerHTML='(<a href="data:text/plain,'+encodeURIComponent(out)+'" download="'+files[0].file.replace(/\.[a-z]+$/i,"")+'_sorted">Save file</a>)<br>';
   document.getElementById("outdiv").style.display = "initial";
 }catch(e){alert("Serious error: "+e.message)}}
 
 function onFile(ele) {
-  var file = ele.files[0];
-  if (file.type!="text/plain") {
-    alert("Please choose a plain text (.txt) file");
-    return;
+  var arr = [];
+  for (var i=0; i<ele.files.length; i++) {
+    if (ele.files[i].type!="text/plain") {
+      alert("Please choose plain text (.txt) files");
+      return;
+    }
+    (function(fr,name){
+      fr.onload = function() {
+        var content = fr.result;
+        document.getElementById("in").value = ele.files.length==1? content : "[multiple files selected]";
+        arr.push({file:name,content:content});
+        if (arr.length==ele.files.length)
+          parse(arr);
+      }
+      fr.readAsText(ele.files[i]);
+    })(new FileReader(),ele.files[i].name);
   }
-  var fr = new FileReader();
-  fr.onload = function() {
-    document.getElementById("in").value = fr.result;
-    parse();
-  };
-  fr.readAsText(file);
 }
   </script>
 </head>
 <body>
   <h1>CoH Master</h1>
   <h4>by Quinn Tucker</h4>
-  <input type="file" id="file" onchange="onFile(this)"/>
+  <input type="file" id="file" onchange="onFile(this)" multiple/>
   <label for="file">Choose a file</label><br>
-  <textarea rows="10" id="in" oninput="parse()" placeholder="Or paste the text here!"></textarea><br>
+  <textarea rows="10" id="in" oninput="parse([{file:'',content:this.value}])" placeholder="Or paste the text here!"></textarea><br>
   <div id="outdiv">
   <h3>Output</h3>
   <h4 id="link"></h4><br>
