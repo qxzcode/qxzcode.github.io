@@ -198,6 +198,7 @@ function parse() {try{
   /* output the result */
   if (error!="")
     out = "There were error(s) while parsing the file; the output may not be valid:\n"+error+"\n"+out;
+  out = out.replace(/\n/g,"\r\n");
   document.getElementById("out").value = out;
   document.getElementById("link").innerHTML='(<a href="data:text/plain,'+encodeURIComponent(out)+'" target="_blank">File for saving</a>)<br>';
   document.getElementById("outdiv").style.display = "initial";
