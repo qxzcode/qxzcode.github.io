@@ -3,7 +3,7 @@
 function Player(x,y) {
   return {
     rect: rectCenter(x,y,20,40),
-    sword: rectCenter(x+35,y-10,30,3),
+    sword: rectCenter(x+35,y+10,30,3),
     vx:0, vy:0,
     oldX:x, oldY:y,
     onGround: false,
@@ -14,11 +14,11 @@ function(dt,t) {
     r.x -= 500*dt;
   if (rightTID!=null)
     r.x += 500*dt;
-  this.vy += 8000*dt;
+  this.vy -= 8000*dt;
   r.y += this.vy*dt;
   this.doCollide();
   this.sword.x = r.x+35;
-  this.sword.y = r.y-10;
+  this.sword.y = r.y+10;
   
   drawRect(r,"#f80");
   drawRect(this.sword,"#ccc");
@@ -40,11 +40,12 @@ function() {
   this.rect.y = newY;
   res = checkTerrain(this.rect);
   if (res) {
-    if (this.rect.y-this.oldY>0) {
+    if (this.rect.y-this.oldY>0)
       this.rect.y = res.y-(res.ry+this.rect.ry);
-      this.onGround = true;
-    } else
+    else {
       this.rect.y = res.y+(res.ry+this.rect.ry);
+      this.onGround = true;
+    }
     this.vy = 0;
   }
   this.oldX = this.rect.x;
