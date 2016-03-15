@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Stabb</title>
+  <style>
+@charset "UTF-8";
+
+body, canvas {
+  margin: 0px;
+  padding: 0px;
+}
+  </style>
+  <script>
+var canvas;
+var ctx;
+window.addEventListener('load', function(e) {try{
+  canvas = document.getElementById('c');
+  ctx = canvas.getContext('2d');
+  initGame();
+  window.addEventListener("beforeunload", function(e) {
+    ws.close();
+    (e || window.event).returnValue = null;
+    return null;
+  });
+  window.addEventListener("mousedown", function(event) {
+    event = event||window.event;
+    event.preventDefault();
+    touchStart(event.clientX, event.clientY, 0);
+  }, false);
+  window.addEventListener("mousemove", function(event) {
+    event = event||window.event;
+    event.preventDefault();
+    touchMove(event.clientX, event.clientY, 0);
+  }, false);
+  window.addEventListener("mouseup", function(event) {
+    event = event||window.event;
+    event.preventDefault();
+    touchEnd(event.clientX, event.clientY, 0);
+  }, false);
+  window.addEventListener("touchstart", function(event) {
+    event.preventDefault();
+    var ts = event.changedTouches;
+    for (var i=0;i<ts.length;i++)
+      touchStart(ts[i].pageX, ts[i].pageY, ts[i].identifier);
+  }, false);
+  window.addEventListener("touchmove", function(event) {
+    event.preventDefault();
+    var ts = event.changedTouches;
+    for (var i=0;i<ts.length;i++)
+      touchMove(ts[i].pageX, ts[i].pageY, ts[i].identifier);
+  }, false);
+  function tEnd(event) {
+    event.preventDefault();
+    var ts = event.changedTouches;
+    for (var i=0;i<ts.length;i++)
+      touchEnd(ts[i].pageX, ts[i].pageY, ts[i].identifier);
+  }
+  window.addEventListener("touchend", tEnd, false);
+  window.addEventListener("touchcancel", tEnd, false);
+  requestAnimationFrame(drawFrame);
+}catch(e){alert("onload: "+e.message)}}, false);
+
+var width, height;
+function onResize() {
+  width=canvas.width=window.innerWidth;
+  height=canvas.height=window.innerHeight;
+}
+  </script>
+  <script src="script2.js"></script>
+  <script src="script.js"></script>
+</head>
+<body>
+  <canvas id="c">ur browzr iz b dum</canvas>
+</body>
+</html>
