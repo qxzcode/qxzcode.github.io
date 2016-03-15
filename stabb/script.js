@@ -8,7 +8,7 @@ function touchStart(tx, ty, tid) {
   if (tx>width/2)
     rightTID = tid;
   if (entities[0].onGround)
-    entities[0].vy = -1500;
+    entities[0].vy = 1500;
 }
 function touchMove(tx, ty, tid) {
   
@@ -39,10 +39,10 @@ var terrain = [];
 var entities = [];
 function initGame() {
   onResize();
-  entities.push(Player(100,height-300));
-  terrain.push(rectCorner(0,height-50,width,50));
-  terrain.push(rectCorner(width/2,height-200,width/3,20));
-  terrain.push(rectCorner(width/2.5,height-125,width/3,20));
+  entities.push(Player(100,300));
+  terrain.push(rectCorner(0,0,9001,50));
+  terrain.push(rectCorner(width/2,180,width/3,20));
+  terrain.push(rectCorner(width/2.5,105,width/3,20));
 }
 
 function checkTerrain(r) {
@@ -65,6 +65,9 @@ function drawFrame(time) {try{
   ctx.fillStyle = "#00B";
   ctx.fillRect(0,0,width,height);
   
+  ctx.save();
+  ctx.translate(width/2-entities[0].rect.x,height);
+  ctx.scale(1,-1);
   dt_acc += dt;
   for (var i in terrain) {
     drawRect(terrain[i],"#0b0");
@@ -74,6 +77,7 @@ function drawFrame(time) {try{
       entities.splice(i--,1);
     }
   }
+  ctx.restore();
   
   requestAnimationFrame(drawFrame);
 }catch(e){alert("drawFrame: "+e.message)}}
