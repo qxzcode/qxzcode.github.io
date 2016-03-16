@@ -20,6 +20,7 @@ var ctx;
 window.addEventListener('load', function(e) {try{
   canvas = document.getElementById('c');
   ctx = canvas.getContext('2d');
+  ctx.save();
   initGame();
   window.addEventListener("beforeunload", function(e) {
     ws.close();
@@ -66,11 +67,17 @@ window.addEventListener('load', function(e) {try{
 
 var width, height;
 function onResize() {
-  width=canvas.width=window.innerWidth;
-  height=canvas.height=window.innerHeight;
+  var ratio = devicePixelRatio/(ctx.webkitBackingStorePixelRatio||ctx.backingStorePixelRatio);
+  canvas.width=(width=window.innerWidth)*ratio;
+  canvas.height=(height=window.innerHeight)*ratio;
+  canvas.style.width = width+"px";
+  canvas.style.height = height+"px";
+  ctx.restore();
+  ctx.save();
+  ctx.scale(ratio,ratio);
 }
   </script>
-  <script src="script2.js"></script>
+  <script src="style.css"></script>
   <script src="script.js"></script>
 </head>
 <body>
