@@ -24,19 +24,26 @@ var shader;
 function initGL() {
   shader = createShaderProg("\
 attribute vec3 inVert;\
+attribute vec2 inTexCoord;\
 uniform mat4 tMat;\
+varying vec2 texCoord;\
 void main() {\
   gl_Position = tMat*vec4(inVert,1.0);\
+  texCoord = inTexCoord;\
 }",
 "\
 precision mediump float;\
 uniform vec4 color;\
+uniform sampler2D sampler;\
+varying vec2 texCoord;\
 void main() {\
-  gl_FragColor = color;\
+  gl_FragColor = color*texture2D(sampler,texCoord);\
 }");
   gl.useProgram(shader);
   shader.inVertLoc = gl.getAttribLocation(shader,"inVert");
   gl.enableVertexAttribArray(shader.inVertLoc);
+  shader.inTexCoordLoc = gl.getAttribLocation(shader,"inTexCoord");
+  gl.enableVertexAttribArray(shader.inTexCoordLoc);
   shader.tMatLoc = gl.getUniformLocation(shader,"tMat");
   shader.colorLoc = gl.getUniformLocation(shader,"color");
   
@@ -64,16 +71,14 @@ function drawRect(r,c) {
   mat4.scale(tMat,tMat,[r.rx,r.ry,1]);
   setTMat();
   setColor(c[0],c[1],c[2],c[3]);
-  drawBuffer(rectBuf);
+  drawBuffer(rectBuf,gl.TRIANGLE_FAN);
   popTM();
 }
 var rectBuf = [
--1,-1,0,
--1,1,0,
-1,1,0,
--1,-1,0,
-1,-1,0,
-1,1,0
+-1,-1,0, 0,0,
+-1,1,0,  0,1,
+1,1,0,   1,1,
+1,-1,0,  1,0,
 ];
 function initBuffers() {
   initBuffer(rectBuf);
@@ -81,11 +86,18 @@ function initBuffers() {
 
 var terrain = [];
 var entities = [];
+var tex;
 function initGame() {
   terrain.push(rectCorner(0,0,9000,2));
   terrain.push(rectCorner(3,3,30,5));
   terrain.push(rectCorner(3,3,30,5));
   terrain.push(rectCorner(4,4,16,50));
+  var img = texImg(10,10);
+  for (var x=0; x<10; x++)
+  for (var y=0; y<10; y++) {
+    img.set(x,y,[0,x/10,0]);
+  }
+  tex = img.toTex();
 }
 
 var lastTime = null;
