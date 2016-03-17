@@ -1,7 +1,7 @@
 
 var touching = false;
 var leftTID=null,rightTID=null;
-function touchStart(tx, ty, tid) {alert(fps)
+function touchStart(tx, ty, tid) {//alert(fps)
   touching = true;
   if (tx<fWidth/2)
     leftTID = tid;
@@ -37,7 +37,8 @@ uniform vec4 color;\
 uniform sampler2D sampler;\
 varying vec2 texCoord;\
 void main() {\
-  gl_FragColor = color*texture2D(sampler,texCoord);\
+  gl_FragColor = texture2D(sampler,texCoord);\
+  gl_FragColor.a = 1.0;\
 }");
   gl.useProgram(shader);
   shader.inVertLoc = gl.getAttribLocation(shader,"inVert");
@@ -90,12 +91,12 @@ var tex;
 function initGame() {
   terrain.push(rectCorner(0,0,9000,2));
   terrain.push(rectCorner(3,3,30,5));
-  terrain.push(rectCorner(3,3,30,5));
-  terrain.push(rectCorner(4,4,16,50));
+  terrain.push(rectCorner(4,4,16,16));
+  terrain.push(rectCorner(15,15,10,10));
   var img = texImg(10,10);
   for (var x=0; x<10; x++)
   for (var y=0; y<10; y++) {
-    img.set(x,y,[0,x/10,0]);
+    img.set(x,y,[0,x/10,(x+y)%2]);
   }
   tex = img.toTex();
 }
@@ -113,8 +114,8 @@ function drawFrame(time) {try{
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   // view transform
   pushTM();
-  mat4.translate(tMat,tMat,[Math.sin(dt_acc/2)*50+50,10,0]);
-  mat4.rotateZ(tMat,tMat,-dt_acc*0.1);
+  mat4.translate(tMat,tMat,[Math.sin(dt_acc/2)*25+25,10,0]);
+  //mat4.rotateZ(tMat,tMat,-dt_acc*0.1);
   setTMat();
   
   dt_acc += dt;
