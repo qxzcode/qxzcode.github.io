@@ -152,16 +152,16 @@ function drawBuffer(model,mode) {
   gl.drawArrays(mode==undefined?gl.TRIANGLES:mode, 0, model.numVerts);
 }
 function texImg(w,h) {
-  var d = new Uint8Array(w*h*4);
+  var d = new Uint8ClampedArray(w*h*4);
   return {
     w:w, h:h,
     d:d,
-    get:function(x,y){var i=x+y*w;return [d[i]/255,d[i+1]/255,d[i+2]/255,d[i+3]/255]},
-    set:function(x,y,c){var i=x+y*w;d[i]=c[0]*255;d[i+1]=c[1]*255;d[i+2]=c[2]*255;d[i+3]=c.length<4?255:c[3]*255},
+    get:function(x,y){var i=(x+y*w)*4;return [d[i]/255,d[i+1]/255,d[i+2]/255,d[i+3]/255]},
+    set:function(x,y,c){var i=(x+y*w)*4;d[i]=c[0]*255;d[i+1]=c[1]*255;d[i+2]=c[2]*255;d[i+3]=c.length<4?255:c[3]*255},
     toTex:function() {
       var tex = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, tex);
-      alert(d);gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, d);alert("GUD");
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,gl.RGBA, gl.UNSIGNED_BYTE, new ImageData(d,10,10));
       gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER, gl.NEAREST);
      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
@@ -171,7 +171,7 @@ function texImg(w,h) {
   };
 }
   </script>
-  <script src="script2.js"></script>
+  <script src="style.css"></script>
   <script src="script.js"></script>
 </head>
 <body>
