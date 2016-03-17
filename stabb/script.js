@@ -1,14 +1,12 @@
 
 var touching = false;
 var leftTID=null,rightTID=null;
-function touchStart(tx, ty, tid) {
+function touchStart(tx, ty, tid) {alert(fps)
   touching = true;
-  if (tx<width/2)
+  if (tx<fWidth/2)
     leftTID = tid;
-  if (tx>width/2)
+  if (tx>fWidth/2)
     rightTID = tid;
-  if (entities[0].onGround)
-    entities[0].vy = 1500;
 }
 function touchMove(tx, ty, tid) {
   
@@ -21,6 +19,33 @@ function touchEnd(tx, ty, tid) {
     rightTID = null;
 }
 
+var tMat=mat4.create();
+var shader;
+function initGL() {
+  shader = createShaderProg("\
+attribute vec3 inVert;\
+uniform mat4 tMat;\
+void main() {\
+  gl_Position = tMat*vec4(inVert,1.0);\
+}",
+"\
+precision mediump float;\
+uniform vec4 color;\
+void main() {\
+  gl_FragColor = color;\
+}");
+  gl.useProgram(shader);
+  shader.inVertLoc = gl.getAttribLocation(shader,"inVert");
+  gl.enableVertexAttribArray(shader.inVertLoc);
+  shader.tMatLoc = gl.getUniformLocation(shader,"tMat");
+  shader.colorLoc = gl.getUniformLocation(shader,"color");
+  
+  gl.clearColor(0.2, 0.2, 0.2, 1.0);
+  
+  onResize();
+  initBuffers();
+}
+
 
 function rectCenter(x,y,rx,ry) {
   return {x:x,y:y,rx:rx,ry:ry,touching:function(o){
@@ -30,56 +55,71 @@ function rectCenter(x,y,rx,ry) {
 function rectCorner(x,y,w,h) {
   return rectCenter(x+w/2,y+h/2,w/2,h/2);
 }
-function drawRect(r,color) {
-  ctx.fillStyle = color;
-  ctx.fillRect(r.x-r.rx,r.y-r.ry,r.rx*2,r.ry*2);
+function setColor(r,g,b,a) {
+  gl.uniform4fv(shader.colorLoc, [r,g,b,a==undefined?1:a]);
+}
+function drawRect(r,c) {
+  pushTM();
+  mat4.translate(tMat,tMat,[r.x,r.y,0]);
+  mat4.scale(tMat,tMat,[r.rx,r.ry,1]);
+  setTMat();
+  setColor(c[0],c[1],c[2],c[3]);
+  drawBuffer(rectBuf);
+  popTM();
+}
+var rectBuf = [
+-1,-1,0,
+-1,1,0,
+1,1,0,
+-1,-1,0,
+1,-1,0,
+1,1,0
+];
+function initBuffers() {
+  initBuffer(rectBuf);
 }
 
 var terrain = [];
 var entities = [];
 function initGame() {
-  onResize();
-  entities.push(Player(100,300));
-  terrain.push(rectCorner(0,0,9001,50));
-  terrain.push(rectCorner(width/2,180,width/3,20));
-  terrain.push(rectCorner(width/2.5,105,width/3,20));
-}
-
-function checkTerrain(r) {
-  for (var i in terrain) {
-    var t = terrain[i];
-    if (t.touching(r)) return t;
-  }
-  return null;
+  terrain.push(rectCorner(0,0,9000,2));
+  terrain.push(rectCorner(3,3,30,5));
+  terrain.push(rectCorner(3,3,30,5));
+  terrain.push(rectCorner(4,4,16,50));
 }
 
 var lastTime = null;
-var dt_acc = 0;
+var dt_acc = 0;var fps;
 function drawFrame(time) {try{
   if (!lastTime) lastTime = time;
-  var rdt = (time-lastTime)/1000, dt = rdt;
+  var rdt = (time-lastTime)/1000, dt = rdt;fps=1/rdt;
   if (dt>1/30) dt = 1/30;
   lastTime = time;
-  if(width!=window.innerWidth||height!=window.innerHeight)
+  if(fWidth!=getPx(innerWidth)||fHeight!=getPx(innerHeight))
     onResize();
-  ctx.fillStyle = "#00B";
-  ctx.fillRect(0,0,width,height);
   
-  ctx.save();
-  ctx.translate(width/2-entities[0].rect.x,height);
-  ctx.scale(1,-1);
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  // view transform
+  pushTM();
+  mat4.translate(tMat,tMat,[Math.sin(dt_acc/2)*50+50,10,0]);
+  mat4.rotateZ(tMat,tMat,-dt_acc*0.1);
+  setTMat();
+  
   dt_acc += dt;
   for (var i in terrain) {
-    drawRect(terrain[i],"#0b0");
+    drawRect(terrain[i],[0,1,0]);
   }
   for (var i=0; i<entities.length; i++) {
     if (entities[i].frame(dt,dt_acc)) {
       entities.splice(i--,1);
     }
   }
-  ctx.restore();
   
-  requestAnimationFrame(drawFrame);
+  popTM();
+  ctx.drawImage(webglCanvas,0,0);
+  var err = gl.getError();
+  if (err==0) requestAnimationFrame(drawFrame);
+  else alert("GL error: "+err);
 }catch(e){alert("drawFrame: "+e.message)}}
 
 
