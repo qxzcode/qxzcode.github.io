@@ -137,18 +137,38 @@ function initBuffer(model) {
   model.buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, model.buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(model), gl.STATIC_DRAW);
-  model.numVerts = model.length/3;
+  model.numVerts = model.length/5;
   model.length = 0; // delete now-unneeded vertex data
 }
 function updateBuffer(buf, data) {
   gl.bindBuffer(gl.ARRAY_BUFFER, buf.buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
-  buf.numVerts = data.length/3;
+  buf.numVerts = data.length/5;
 }
 function drawBuffer(model,mode) {
   gl.bindBuffer(gl.ARRAY_BUFFER, model.buffer);
-  gl.vertexAttribPointer(shader.inVertLoc, 3, gl.FLOAT, false, 4*3,0);
+  gl.vertexAttribPointer(shader.inVertLoc, 3, gl.FLOAT, false, 4*5,0);
+  gl.vertexAttribPointer(shader.inTexCoordLoc, 2, gl.FLOAT, false, 4*5,4*3);
   gl.drawArrays(mode==undefined?gl.TRIANGLES:mode, 0, model.numVerts);
+}
+function texImg(w,h) {
+  var d = new Uint8Array(w*h*4);
+  return {
+    w:w, h:h,
+    d:d,
+    get:function(x,y){var i=x+y*w;return [d[i]/255,d[i+1]/255,d[i+2]/255,d[i+3]/255]},
+    set:function(x,y,c){var i=x+y*w;d[i]=c[0]*255;d[i+1]=c[1]*255;d[i+2]=c[2]*255;d[i+3]=c.length<4?255:c[3]*255},
+    toTex:function() {
+      var tex = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      alert(d);gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, d);alert("GUD");
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+      return tex;
+    }
+  };
 }
   </script>
   <script src="script2.js"></script>
