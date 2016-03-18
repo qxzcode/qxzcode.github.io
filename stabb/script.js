@@ -1,26 +1,32 @@
 
 var touching = false;
-var leftTID=null,rightTID=null;
+var joyTID;
 function touchStart(tx, ty, tid) {//alert(fps)
   touching = true;
-  if (ty>fHeight*3/4) {
-    if (player1.onGround) player1.vy = 200;
-  } else {
-    if (tx<fWidth/2)
-      leftTID = tid;
-    if (tx>fWidth/2)
-      rightTID = tid;
+  var dx=tx-tjr.x,dy=ty-tjr.y;
+  if (Math.abs(dx)<tjr.rx && Math.abs(dy)<tjr.ry) {
+    joyTID = tid;
+    joy(dx,dy);
   }
+  
 }
 function touchMove(tx, ty, tid) {
-  
+  var dx=tx-tjr.x,dy=ty-tjr.y;
+  if (tid==joyTID) joy(dx,dy);
+}
+var joyL=false,joyR=false,joyU=false,joyD=false;
+function joy(dx,dy) {
+  joyR = dx>tjr.rx/2;
+  joyL = dx<-tjr.rx/2;
+  joyU = dy>tjr.ry/2;
+  joyD = dy<-tjr.ry/2;
 }
 function touchEnd(tx, ty, tid) {
   touching = false;
-  if (tid==leftTID)
-    leftTID = null;
-  if (tid==rightTID)
-    rightTID = null;
+  if (tid==joyTID) {
+    joyTID = null;
+    joyL=false;joyR=false;joyU=false;joyD=false;
+  }
 }
 
 var tMat=mat4.create();
@@ -42,7 +48,6 @@ uniform sampler2D sampler;\
 varying vec2 texCoord;\
 void main() {\
   gl_FragColor = color*texture2D(sampler,texCoord);\
-  if (gl_FragColor.a<0.5) discard;\
 }");
   gl.useProgram(shader);
   shader.inVertLoc = gl.getAttribLocation(shader,"inVert");
@@ -53,8 +58,8 @@ void main() {\
   shader.colorLoc = gl.getUniformLocation(shader,"color");
   
   gl.clearColor(0.2, 0.2, 0.2, 1.0);
-  //gl.enable(gl.BLEND);
-  //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   
   onResize();
   initBuffers();
@@ -93,11 +98,12 @@ function initBuffers() {
 }
 
 var terrain = [];
-var groundTex;
+var groundTex,joyBgTex;
+var joyRect,tjr;
 var entities = [];
 var player1;
 function initGame() {
-  entities.push(player1=Player(80,50));
+  entities.push(player1=Player(150,50));
   
   terrain.push(rectCorner(0,0,300,17));
   
@@ -124,6 +130,18 @@ function initGame() {
     }
   }
   groundTex = img.toTex();
+  
+  var joyS = Math.ceil(Math.min(width,height)/10);
+  joyRect = rectCenter(width*5/6,width/6,joyS,joyS);
+  tjr = rectCenter(joyRect.x*pxScale,joyRect.y*pxScale,joyRect.rx*pxScale,joyRect.ry*pxScale);
+  img = texImg(joyS*2,joyS*2);
+  for (var x=0; x<joyS*2; x++) {
+    for (var y=0; y<joyS*2; y++) {
+      var dx=x-joyS,dy=y-joyS;
+      img.set(x,y,dx*dx+dy*dy<joyS*joyS?[1,1,1,.2]:[0,0,0,0]);
+    }
+  }
+  joyBgTex = img.toTex();
 }
 function checkTerrain(r) {
   for (var i in terrain) {
@@ -135,7 +153,7 @@ function checkTerrain(r) {
 
 var lastTime = null;
 var dt_acc = 0;var fps;
-var camX = 50;
+var camX = 150;
 function drawFrame(time) {try{
   if (!lastTime) lastTime = time;
   var rdt = (time-lastTime)/1000, dt = rdt;fps=1/rdt;
@@ -148,10 +166,11 @@ function drawFrame(time) {try{
   // view transform
   pushTM();
   mat4.translate(tMat,tMat,[Math.floor(-camX+width/2),0,0]);
-  camX -= (camX-player1.rect.x)*5*dt;
+  camX -= (camX-player1.rect.x)*2*dt;
   setTMat();
   
   dt_acc += dt;
+  bindTex(groundTex);
   for (var i=0; i<entities.length; i++) {
     if (entities[i].frame(dt,dt_acc)) {
       entities.splice(i--,1);
@@ -164,7 +183,10 @@ function drawFrame(time) {try{
   }
   
   popTM();
-  //ctx.drawImage(webglCanvas,0,0);
+  setTMat();
+  bindTex(joyBgTex);
+  drawRect(joyRect);
+  
   var err = gl.getError();
   if (err==0) requestAnimationFrame(drawFrame);
   else alert("GL error: "+err);
