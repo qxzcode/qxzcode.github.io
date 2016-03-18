@@ -2,7 +2,7 @@
 var touching = false;
 var leftTID=null,rightTID=null;
 function touchStart(tx, ty, tid) {//alert(fps)
-  touching = true;alert(ty)
+  touching = true;alert(tx+","+ty)
   if (ty>fWidth*3/4 && player1.onGround)
     player1.vy = 200;
   {
