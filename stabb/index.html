@@ -44,42 +44,42 @@ window.addEventListener('load', function(e) {try{
   window.addEventListener("mousedown", function(event) {
     event = event||window.event;
     event.preventDefault();
-    touchStart(event.clientX, event.clientY, 0);
+    touchStart(event.clientX, innerHeight-event.clientY, 0);
   }, false);
   window.addEventListener("mousemove", function(event) {
     event = event||window.event;
     event.preventDefault();
-    touchMove(event.clientX, event.clientY, 0);
+    touchMove(event.clientX, innerHeight-event.clientY, 0);
   }, false);
   window.addEventListener("mouseup", function(event) {
     event = event||window.event;
     event.preventDefault();
-    touchEnd(event.clientX, event.clientY, 0);
+    touchEnd(event.clientX, innerHeight-event.clientY, 0);
   }, false);
   window.addEventListener("touchstart", function(event) {
     event.preventDefault();
     var ts = event.changedTouches;
     for (var i=0;i<ts.length;i++)
-      touchStart(ts[i].pageX, ts[i].pageY, ts[i].identifier);
+      touchStart(ts[i].pageX, innerHeight-ts[i].pageY, ts[i].identifier);
   }, false);
   window.addEventListener("touchmove", function(event) {
     event.preventDefault();
     var ts = event.changedTouches;
     for (var i=0;i<ts.length;i++)
-      touchMove(ts[i].pageX, ts[i].pageY, ts[i].identifier);
+      touchMove(ts[i].pageX, innerHeight-ts[i].pageY, ts[i].identifier);
   }, false);
   function tEnd(event) {
     event.preventDefault();
     var ts = event.changedTouches;
     for (var i=0;i<ts.length;i++)
-      touchEnd(ts[i].pageX, ts[i].pageY, ts[i].identifier);
+      touchEnd(ts[i].pageX, innerHeight-ts[i].pageY, ts[i].identifier);
   }
   window.addEventListener("touchend", tEnd, false);
   window.addEventListener("touchcancel", tEnd, false);
   requestAnimationFrame(drawFrame);
 }catch(e){alert("onload: "+e.message)}}, false);
 
-var width, height, fWidth, fHeight, pxScale=7;
+var width, height, fWidth, fHeight, pxScale=5;
 function getPx(x) {
   return Math.ceil(x/pxScale)*pxScale;
 }
@@ -154,6 +154,9 @@ function drawBuffer(model,mode) {
   gl.vertexAttribPointer(shader.inTexCoordLoc, 2, gl.FLOAT, false, 4*5,4*3);
   gl.drawArrays(mode==undefined?gl.TRIANGLES:mode, 0, model.numVerts);
 }
+function bindTex(tex) {
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+}
 function texImg(w,h) {
   var d = new Uint8ClampedArray(w*h*4);
   return {
@@ -163,7 +166,7 @@ function texImg(w,h) {
     set:function(x,y,c){var i=(x+y*w)*4;d[i]=c[0]*255;d[i+1]=c[1]*255;d[i+2]=c[2]*255;d[i+3]=c.length<4?255:c[3]*255},
     toTex:function() {
       var tex = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, tex);
+      bindTex(tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,gl.RGBA, gl.UNSIGNED_BYTE, new ImageData(d,w,h));
       gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER, gl.NEAREST);
