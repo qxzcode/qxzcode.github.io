@@ -3,10 +3,14 @@ var touching = false;
 var leftTID=null,rightTID=null;
 function touchStart(tx, ty, tid) {//alert(fps)
   touching = true;
-  if (tx<fWidth/2)
-    leftTID = tid;
-  if (tx>fWidth/2)
-    rightTID = tid;
+  if (ty>fWidth*3/4 && player1.onGround)
+    player1.vy = 200;
+  {
+    if (tx<fWidth/2)
+      leftTID = tid;
+    if (tx>fWidth/2)
+      rightTID = tid;
+  }
 }
 function touchMove(tx, ty, tid) {
   
@@ -37,7 +41,7 @@ uniform vec4 color;\
 uniform sampler2D sampler;\
 varying vec2 texCoord;\
 void main() {\
-  gl_FragColor = texture2D(sampler,texCoord);\
+  gl_FragColor = color*texture2D(sampler,texCoord);\
   if (gl_FragColor.a<0.5) discard;\
 }");
   gl.useProgram(shader);
@@ -69,6 +73,7 @@ function setColor(r,g,b,a) {
   gl.uniform4fv(shader.colorLoc, [r,g,b,a==undefined?1:a]);
 }
 function drawRect(r,c) {
+  c = c || [1,1,1];
   pushTM();
   mat4.translate(tMat,tMat,[r.x,r.y,0]);
   mat4.scale(tMat,tMat,[r.rx,r.ry,1]);
@@ -88,10 +93,14 @@ function initBuffers() {
 }
 
 var terrain = [];
-var entities = [];
 var groundTex;
+var entities = [];
+var player1;
 function initGame() {
-  terrain.push(rectCorner(0,0,300,20));
+  entities.push(player1=Player(80,50));
+  
+  terrain.push(rectCorner(0,0,300,17));
+  
   var img = texImg(300,20);
   for (var x=0; x<300; x++) {
     var h = 20-Math.random()*3;
@@ -116,9 +125,17 @@ function initGame() {
   }
   groundTex = img.toTex();
 }
+function checkTerrain(r) {
+  for (var i in terrain) {
+    var t = terrain[i];
+    if (t.touching(r)) return t;
+  }
+  return null;
+}
 
 var lastTime = null;
 var dt_acc = 0;var fps;
+var camX = 50;
 function drawFrame(time) {try{
   if (!lastTime) lastTime = time;
   var rdt = (time-lastTime)/1000, dt = rdt;fps=1/rdt;
@@ -130,17 +147,20 @@ function drawFrame(time) {try{
   gl.clear(gl.COLOR_BUFFER_BIT);
   // view transform
   pushTM();
-  mat4.translate(tMat,tMat,[-Math.sin(dt_acc/2)*30-40,0,0]);
+  mat4.translate(tMat,tMat,[-camX+width/2,0,0]);
+  camX -= (camX-player1.rect.x)*5*dt;
   setTMat();
   
   dt_acc += dt;
-  for (var i in terrain) {
-    drawRect(terrain[i],[0,1,0]);
-  }
   for (var i=0; i<entities.length; i++) {
     if (entities[i].frame(dt,dt_acc)) {
       entities.splice(i--,1);
     }
+  }
+  for (var i in terrain) {
+    var t = terrain[i];
+    t = rectCorner(t.x-t.rx,t.y-t.ry,t.rx*2,t.ry*2+3);
+    drawRect(t);
   }
   
   popTM();
