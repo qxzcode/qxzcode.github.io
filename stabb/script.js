@@ -91,9 +91,9 @@ var terrain = [];
 var entities = [];
 var groundTex;
 function initGame() {
-  terrain.push(rectCorner(0,0,200,20));
-  var img = texImg(200,20);
-  for (var x=0; x<200; x++) {
+  terrain.push(rectCorner(0,0,300,20));
+  var img = texImg(300,20);
+  for (var x=0; x<300; x++) {
     var h = 20-Math.random()*3;
     for (var y=0; y<20; y++) {
       var b = Math.random()*0.03;
