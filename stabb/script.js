@@ -38,7 +38,7 @@ uniform sampler2D sampler;\
 varying vec2 texCoord;\
 void main() {\
   gl_FragColor = texture2D(sampler,texCoord);\
-  gl_FragColor.a = 1.0;\
+  if (gl_FragColor.a<0.5) discard;\
 }");
   gl.useProgram(shader);
   shader.inVertLoc = gl.getAttribLocation(shader,"inVert");
@@ -49,6 +49,8 @@ void main() {\
   shader.colorLoc = gl.getUniformLocation(shader,"color");
   
   gl.clearColor(0.2, 0.2, 0.2, 1.0);
+  //gl.enable(gl.BLEND);
+  //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   
   onResize();
   initBuffers();
@@ -87,18 +89,18 @@ function initBuffers() {
 
 var terrain = [];
 var entities = [];
-var tex;
+var groundTex;
 function initGame() {
-  terrain.push(rectCorner(0,0,9000,2));
-  terrain.push(rectCorner(3,3,30,5));
-  terrain.push(rectCorner(4,4,16,16));
-  terrain.push(rectCorner(15,15,10,10));
-  var img = texImg(10,10);
-  for (var x=0; x<10; x++)
-  for (var y=0; y<10; y++) {
-    img.set(x,y,[0,x/10,(x+y)%2]);
+  terrain.push(rectCorner(0,0,200,20));
+  var img = texImg(200,20);
+  for (var x=0; x<200; x++) {
+    var h = 20-Math.random()*3;
+    for (var y=0; y<20; y++) {
+      var b = Math.random()*0.03;
+      img.set(x,y,y<h?[153/255+b,100/255+b,54/255+b]:[0,0,0,0]);
+    }
   }
-  tex = img.toTex();
+  groundTex = img.toTex();
 }
 
 var lastTime = null;
@@ -111,11 +113,10 @@ function drawFrame(time) {try{
   if(fWidth!=getPx(innerWidth)||fHeight!=getPx(innerHeight))
     onResize();
   
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.clear(gl.COLOR_BUFFER_BIT);
   // view transform
   pushTM();
-  mat4.translate(tMat,tMat,[Math.sin(dt_acc/2)*25+25,10,0]);
-  //mat4.rotateZ(tMat,tMat,-dt_acc*0.1);
+  mat4.translate(tMat,tMat,[-Math.sin(dt_acc)*30-40,0,0]);
   setTMat();
   
   dt_acc += dt;
