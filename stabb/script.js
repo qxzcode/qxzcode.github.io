@@ -95,15 +95,17 @@ function initGame() {
   var img = texImg(300,20);
   for (var x=0; x<300; x++) {
     var h = 20-Math.random()*3;
+    var gh = 17-Math.random()*2;
     for (var y=0; y<20; y++) {
       var c;
       if (y<h) {
-        if (y<17 && Math.random()<0.02) {
+        if (y<16 && Math.random()<0.02) {
           var b = Math.random()*0.1+0.45;
           c = [b,b,b];
         } else {
           var b = Math.random()*0.03;
-          c = [153/255+b,100/255+b,54/255+b];
+          c = y<gh?[153/255,100/255,54/255]:[41/255,186/255,41/255];
+          c[0]+=b;c[1]+=b;c[2]+=b;
         }
       } else
         c = [0,0,0,0];
@@ -128,7 +130,7 @@ function drawFrame(time) {try{
   gl.clear(gl.COLOR_BUFFER_BIT);
   // view transform
   pushTM();
-  mat4.translate(tMat,tMat,[-Math.sin(dt_acc)*30-40,0,0]);
+  mat4.translate(tMat,tMat,[-Math.sin(dt_acc/2)*30-40,0,0]);
   setTMat();
   
   dt_acc += dt;
