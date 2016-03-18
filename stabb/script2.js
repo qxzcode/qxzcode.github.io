@@ -9,10 +9,12 @@ function Player(x,y) {
     frame:
 function(dt,t) {
   var r = this.rect;
-  if (leftTID!=null)
+  if (joyL)
     r.x -= 100*dt;
-  if (rightTID!=null)
+  if (joyR)
     r.x += 100*dt;
+  if (joyU && this.onGround)
+    this.vy = 200;
   this.vy -= 500*dt;
   r.y += this.vy*dt;
   this.doCollide();
