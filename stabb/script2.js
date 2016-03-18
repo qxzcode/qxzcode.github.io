@@ -2,8 +2,7 @@
 
 function Player(x,y) {
   return {
-    rect: rectCenter(x,y,20,40),
-    sword: rectCenter(x+35,y+10,30,3),
+    rect: rectCenter(x,y,3,7),
     vx:0, vy:0,
     oldX:x, oldY:y,
     onGround: false,
@@ -11,17 +10,14 @@ function Player(x,y) {
 function(dt,t) {
   var r = this.rect;
   if (leftTID!=null)
-    r.x -= 500*dt;
+    r.x -= 100*dt;
   if (rightTID!=null)
-    r.x += 500*dt;
-  this.vy -= 8000*dt;
+    r.x += 100*dt;
+  this.vy -= 500*dt;
   r.y += this.vy*dt;
   this.doCollide();
-  this.sword.x = r.x+35;
-  this.sword.y = r.y+10;
   
-  drawRect(r,"#f80");
-  drawRect(this.sword,"#ccc");
+  drawRect(r,[0,1,0]);
   return false;
 },
   doCollide:
