@@ -75,7 +75,7 @@ function setColor(r,g,b,a) {
 function drawRect(r,c) {
   c = c || [1,1,1];
   pushTM();
-  mat4.translate(tMat,tMat,[r.x,r.y,0]);
+  mat4.translate(tMat,tMat,[Math.floor(r.x),Math.floor(r.y),0]);
   mat4.scale(tMat,tMat,[r.rx,r.ry,1]);
   setTMat();
   setColor(c[0],c[1],c[2],c[3]);
@@ -147,7 +147,7 @@ function drawFrame(time) {try{
   gl.clear(gl.COLOR_BUFFER_BIT);
   // view transform
   pushTM();
-  mat4.translate(tMat,tMat,[-camX+width/2,0,0]);
+  mat4.translate(tMat,tMat,[Math.floor(-camX+width/2),0,0]);
   camX -= (camX-player1.rect.x)*5*dt;
   setTMat();
   
@@ -164,7 +164,7 @@ function drawFrame(time) {try{
   }
   
   popTM();
-  ctx.drawImage(webglCanvas,0,0);
+  //ctx.drawImage(webglCanvas,0,0);
   var err = gl.getError();
   if (err==0) requestAnimationFrame(drawFrame);
   else alert("GL error: "+err);
