@@ -36,8 +36,8 @@ var canvas,webglCanvas;
 var ctx,gl;
 window.addEventListener('load', function(e) {try{
   canvas = document.getElementById('c');
-  ctx = canvas.getContext("2d");
-  webglCanvas = document.createElement("canvas");
+  //ctx = canvas.getContext("2d");
+  webglCanvas = canvas;//document.createElement("canvas");
   gl = webglCanvas.getContext("webgl",{alpha:false});
   initGL();
   initGame();
@@ -85,14 +85,17 @@ function getPx(x) {
 }
 function onResize() {
   scrollTo(0,0);
-  width=webglCanvas.width=canvas.width=Math.ceil(window.innerWidth/pxScale);
-  height=webglCanvas.height=canvas.height=Math.ceil(window.innerHeight/pxScale);
-  fWidth=width*pxScale;fHeight=height*pxScale;
+  var ratio = window.devicePixelRatio || 1;
+  width=(fWidth=window.innerWidth)/pxScale;
+  height=(fHeight=window.innerHeight)/pxScale;
   canvas.style.width = fWidth+"px";
   canvas.style.height = fHeight+"px";
-  gl.viewport(0,0, width,height);
+  webglCanvas.width=fWidth*ratio;
+  webglCanvas.height=fHeight*ratio;
+  gl.viewport(0,0, webglCanvas.width,webglCanvas.height);
   popTM();
-  mat4.ortho(tMat,0,width,0,height,-1,1);
+  mat4.ortho(tMat,0,fWidth,0,fHeight,-1,1);
+  mat4.scale(tMat,tMat,[pxScale,pxScale,1]);
   pushTM();
 }
 
@@ -171,7 +174,7 @@ function texImg(w,h) {
   };
 }
   </script>
-  <script src="script2.js"></script>
+  <script src="style.css"></script>
   <script src="script.js"></script>
 </head>
 <body>
