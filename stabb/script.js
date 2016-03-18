@@ -5,7 +5,7 @@ function touchStart(tx, ty, tid) {//alert(fps)
   touching = true;
   if (ty>fHeight*3/4 && player1.onGround)
     player1.vy = 200;
-  {
+  else {
     if (tx<fWidth/2)
       leftTID = tid;
     if (tx>fWidth/2)
