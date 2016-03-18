@@ -107,6 +107,8 @@ function initGame() {
         }
       } else
         c = [0,0,0,0];
+      var m = (y/20)*0.5+0.5;
+      c[0]*=m;c[1]*=m;c[2]*=m;
       img.set(x,y,c);
     }
   }
