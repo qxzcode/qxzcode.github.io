@@ -1,25 +1,29 @@
 
 var touching = false;
 var joyTID;
+var joyL=false,joyR=false,joyU=false,joyD=false;
+var btnAtk=false,btnJmp=false;
 function touchStart(tx, ty, tid) {//alert(fps)
   touching = true;
-  var dx=tx-tjr.x,dy=ty-tjr.y;
-  if (Math.abs(dx)<tjr.rx && Math.abs(dy)<tjr.ry) {
+  var r = joyRect.testPt(tx,ty);
+  if (r.g) {
     joyTID = tid;
-    joy(dx,dy);
+    joy(r.dx,r.dy);
   }
-  
+  if (atkRect.testPt(tx,ty).g)
+    btnAtk = true;
+  if (jmpRect.testPt(tx,ty).g)
+    btnJmp = true;
 }
 function touchMove(tx, ty, tid) {
-  var dx=tx-tjr.x,dy=ty-tjr.y;
-  if (tid==joyTID) joy(dx,dy);
+  var r = joyRect.testPt(tx,ty);
+  if (tid==joyTID) joy(r.dx,r.dy);
 }
-var joyL=false,joyR=false,joyU=false,joyD=false;
 function joy(dx,dy) {
-  joyR = dx>tjr.rx/2;
-  joyL = dx<-tjr.rx/2;
-  joyU = dy>tjr.ry/2;
-  joyD = dy<-tjr.ry/2;
+  joyR = dx>joyRect.rx/3;
+  joyL = dx<-joyRect.rx/3;
+  joyU = dy>joyRect.ry/2;
+  joyD = dy<-joyRect.ry/2;
 }
 function touchEnd(tx, ty, tid) {
   touching = false;
@@ -29,46 +33,12 @@ function touchEnd(tx, ty, tid) {
   }
 }
 
-var tMat=mat4.create();
-var shader;
-function initGL() {
-  shader = createShaderProg("\
-attribute vec3 inVert;\
-attribute vec2 inTexCoord;\
-uniform mat4 tMat;\
-varying vec2 texCoord;\
-void main() {\
-  gl_Position = tMat*vec4(inVert,1.0);\
-  texCoord = inTexCoord;\
-}",
-"\
-precision mediump float;\
-uniform vec4 color;\
-uniform sampler2D sampler;\
-varying vec2 texCoord;\
-void main() {\
-  gl_FragColor = color*texture2D(sampler,texCoord);\
-}");
-  gl.useProgram(shader);
-  shader.inVertLoc = gl.getAttribLocation(shader,"inVert");
-  gl.enableVertexAttribArray(shader.inVertLoc);
-  shader.inTexCoordLoc = gl.getAttribLocation(shader,"inTexCoord");
-  gl.enableVertexAttribArray(shader.inTexCoordLoc);
-  shader.tMatLoc = gl.getUniformLocation(shader,"tMat");
-  shader.colorLoc = gl.getUniformLocation(shader,"color");
-  
-  gl.clearColor(0.2, 0.2, 0.2, 1.0);
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-  
-  onResize();
-  initBuffers();
-}
-
-
 function rectCenter(x,y,rx,ry) {
   return {x:x,y:y,rx:rx,ry:ry,touching:function(o){
     return Math.abs(this.x-o.x)<this.rx+o.rx && Math.abs(this.y-o.y)<this.ry+o.ry;
+  },testPt:function(x,y){
+    var dx=x-this.x,dy=y-this.y;
+    return {dx:dx,dy:dy, g:Math.abs(dx)<joyRect.rx&&Math.abs(dy)<joyRect.ry};
   }};
 }
 function rectCorner(x,y,w,h) {
@@ -80,7 +50,7 @@ function setColor(r,g,b,a) {
 function drawRect(r,c) {
   c = c || [1,1,1];
   pushTM();
-  mat4.translate(tMat,tMat,[Math.floor(r.x),Math.floor(r.y),0]);
+  mat4.translate(tMat,tMat,[Math.floor(r.x-r.rx)+r.rx,Math.floor(r.y-r.ry)+r.ry,0]);
   mat4.scale(tMat,tMat,[r.rx,r.ry,1]);
   setTMat();
   setColor(c[0],c[1],c[2],c[3]);
@@ -98,8 +68,7 @@ function initBuffers() {
 }
 
 var terrain = [];
-var groundTex,joyBgTex;
-var joyRect,tjr;
+var groundTex;
 var entities = [];
 var player1;
 function initGame() {
@@ -130,18 +99,6 @@ function initGame() {
     }
   }
   groundTex = img.toTex();
-  
-  var joyS = Math.ceil(Math.min(width,height)/10);
-  joyRect = rectCenter(width*5/6,width/6,joyS,joyS);
-  tjr = rectCenter(joyRect.x*pxScale,joyRect.y*pxScale,joyRect.rx*pxScale,joyRect.ry*pxScale);
-  img = texImg(joyS*2,joyS*2);
-  for (var x=0; x<joyS*2; x++) {
-    for (var y=0; y<joyS*2; y++) {
-      var dx=x-joyS,dy=y-joyS;
-      img.set(x,y,dx*dx+dy*dy<joyS*joyS?[1,1,1,.2]:[0,0,0,0]);
-    }
-  }
-  joyBgTex = img.toTex();
 }
 function checkTerrain(r) {
   for (var i in terrain) {
@@ -159,7 +116,7 @@ function drawFrame(time) {try{
   var rdt = (time-lastTime)/1000, dt = rdt;fps=1/rdt;
   if (dt>1/30) dt = 1/30;
   lastTime = time;
-  if(fWidth!=getPx(innerWidth)||fHeight!=getPx(innerHeight))
+  if(width!=innerWidth/pxScale||height!=innerHeight/pxScale)
     onResize();
   
   gl.clear(gl.COLOR_BUFFER_BIT);
@@ -186,6 +143,10 @@ function drawFrame(time) {try{
   setTMat();
   bindTex(joyBgTex);
   drawRect(joyRect);
+  bindTex(atkTex);
+  drawRect(atkRect);
+  bindTex(jmpTex);
+  drawRect(jmpRect);
   
   var err = gl.getError();
   if (err==0) requestAnimationFrame(drawFrame);
