@@ -1,9 +1,7 @@
 
 var touching = false;
 var joyTID;
-var joyL=false,joyR=false,joyU=false,joyD=false;
-var btnAtk=false,btnJmp=false;
-function touchStart(tx, ty, tid) {//alert(fps)
+function touchStart(tx, ty, tid) {
   touching = true;
   var r = joyRect.testPt(tx,ty);
   if (r.g) {
@@ -11,25 +9,25 @@ function touchStart(tx, ty, tid) {//alert(fps)
     joy(r.dx,r.dy);
   }
   if (atkRect.testPt(tx,ty).g)
-    btnAtk = true;
+    {player1.btnAtk = true;alert(fps)}
   if (jmpRect.testPt(tx,ty).g)
-    btnJmp = true;
+    player1.btnJmp = true;
 }
 function touchMove(tx, ty, tid) {
   var r = joyRect.testPt(tx,ty);
   if (tid==joyTID) joy(r.dx,r.dy);
 }
 function joy(dx,dy) {
-  joyR = dx>joyRect.rx/3;
-  joyL = dx<-joyRect.rx/3;
-  joyU = dy>joyRect.ry/2;
-  joyD = dy<-joyRect.ry/2;
+  player1.joyR = dx>joyRect.rx/3;
+  player1.joyL = dx<-joyRect.rx/3;
+  player1.joyU = dy>joyRect.ry/2;
+  player1.joyD = dy<-joyRect.ry/2;
 }
 function touchEnd(tx, ty, tid) {
   touching = false;
   if (tid==joyTID) {
     joyTID = null;
-    joyL=false;joyR=false;joyU=false;joyD=false;
+    player1.joyL=player1.joyR=player1.joyU=player1.joyD=false;
   }
 }
 
@@ -50,7 +48,7 @@ function setColor(r,g,b,a) {
 function drawRect(r,c) {
   c = c || [1,1,1];
   pushTM();
-  mat4.translate(tMat,tMat,[Math.floor(r.x-r.rx)+r.rx,Math.floor(r.y-r.ry)+r.ry,0]);
+  mat4.translate(tMat,tMat,[rttBound?r.x:Math.floor(r.x-r.rx)+r.rx,rttBound?r.y:Math.floor(r.y-r.ry)+r.ry,0]);
   mat4.scale(tMat,tMat,[r.rx,r.ry,1]);
   setTMat();
   setColor(c[0],c[1],c[2],c[3]);
@@ -68,7 +66,7 @@ function initBuffers() {
 }
 
 var terrain = [];
-var groundTex;
+var solidTex,groundTex;
 var entities = [];
 var player1;
 function initGame() {
@@ -99,6 +97,12 @@ function initGame() {
     }
   }
   groundTex = img.toTex();
+  
+  img = texImg(1,1);
+  img.set(0,0,[1,1,1]);
+  solidTex = img.toTex();
+  
+  initSword();
 }
 function checkTerrain(r) {
   for (var i in terrain) {
@@ -127,12 +131,12 @@ function drawFrame(time) {try{
   setTMat();
   
   dt_acc += dt;
-  bindTex(groundTex);
   for (var i=0; i<entities.length; i++) {
     if (entities[i].frame(dt,dt_acc)) {
       entities.splice(i--,1);
     }
   }
+  bindTex(groundTex);
   for (var i in terrain) {
     var t = terrain[i];
     t = rectCorner(t.x-t.rx,t.y-t.ry,t.rx*2,t.ry*2+3);
