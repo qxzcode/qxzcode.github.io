@@ -13,9 +13,12 @@ function(dt,t) {
     r.x -= 100*dt;
   if (joyR)
     r.x += 100*dt;
-  if (joyU && this.onGround)
-    this.vy = 200;
-  this.vy -= 500*dt;
+  if (btnJmp) {
+    btnJmp = false;
+    if (this.onGround)
+      this.vy = 300;
+  }
+  this.vy -= 1000*dt;
   r.y += this.vy*dt;
   this.doCollide();
   
