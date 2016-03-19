@@ -74,7 +74,7 @@ window.addEventListener('load', function(e) {try{
   window.addEventListener("touchend", tEnd, false);
   window.addEventListener("touchcancel", tEnd, false);
   requestAnimationFrame(drawFrame);
-}catch(e){alert("onload: "+e.message)}}, false);
+}catch(e){alert("onload: "+e)}}, false);
 
 var width, height, fWidth, fHeight, pxScale=5;
 function onResize() {
@@ -258,15 +258,17 @@ function createTex(data) {
 function updateTex(data) {
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,data);
 }
-var joyRect,jmpRect,atkRect;
+var joyRect1,jmpRect1,atkRect1,joyRect2,jmpRect2,atkRect2;
 var joyBgTex,jmpTex,atkTex;
 function initJoy() {
   var minD = Math.min(width,height);
+  function mirror(r){return rectCenter(width-r.x,r.y,r.rx,r.ry)}
   
   var joyS = Math.ceil(minD/10), joyS2=joyS*joyS;
   var btnS = Math.floor(minD/7/2)*2+1,hBtnS=Math.floor(btnS/2);
   
-  joyRect = rectCenter(width-btnS-15-joyS,4+joyS,joyS,joyS);
+  joyRect1 = rectCenter(btnS+15+joyS,4+joyS,joyS,joyS);
+  joyRect2 = mirror(joyRect1);
   var img = texImg(joyS*2,joyS*2);
   for (var x=0; x<joyS*2; x++) {
     for (var y=0; y<joyS*2; y++) {
@@ -276,7 +278,8 @@ function initJoy() {
   }
   joyBgTex = img.toTex();
   
-  atkRect = rectCorner(width-4-btnS,minD/5,btnS,btnS);
+  atkRect1 = rectCorner(4,minD/5,btnS,btnS);
+  atkRect2 = mirror(atkRect1);
   img = texImg(btnS,btnS);
   for (var x=0; x<btnS; x++) {
     for (var y=0; y<btnS; y++) {
@@ -286,7 +289,8 @@ function initJoy() {
   }
   atkTex = img.toTex();
   
-  jmpRect = rectCorner(width-4-btnS,minD/5+btnS+3,btnS,btnS);
+  jmpRect1 = rectCorner(4,minD/5+btnS+3,btnS,btnS);
+  jmpRect2 = mirror(jmpRect1);
   img = texImg(btnS,btnS);
   for (var x=0; x<btnS; x++) {
     for (var y=0; y<btnS; y++) {
