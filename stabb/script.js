@@ -1,33 +1,49 @@
 
 var touching = false;
-var joyTID;
-function touchStart(tx, ty, tid) {
+var joyTID1,joyTID2;
+function touchStart(tx, ty, tid) {try{
   touching = true;
-  var r = joyRect.testPt(tx,ty);
+  var r = joyRect1.testPt(tx,ty);
   if (r.g) {
-    joyTID = tid;
-    joy(r.dx,r.dy);
+    joyTID1 = tid;
+    joy(1,r.dx,r.dy);
   }
-  if (atkRect.testPt(tx,ty).g)
-    {player1.btnAtk = true;alert(fps)}
-  if (jmpRect.testPt(tx,ty).g)
+  r = joyRect2.testPt(tx,ty);
+  if (r.g) {
+    joyTID2 = tid;
+    joy(2,r.dx,r.dy);
+  }
+  if (atkRect1.testPt(tx,ty).g)
+    player1.btnAtk = true;
+  if (jmpRect1.testPt(tx,ty).g)
     player1.btnJmp = true;
-}
+  if (atkRect2.testPt(tx,ty).g)
+    player2.btnAtk = true;
+  if (jmpRect2.testPt(tx,ty).g)
+    player2.btnJmp = true;
+}catch(e){alert(e)}}
 function touchMove(tx, ty, tid) {
-  var r = joyRect.testPt(tx,ty);
-  if (tid==joyTID) joy(r.dx,r.dy);
+  var r = joyRect1.testPt(tx,ty);
+  if (tid==joyTID1) joy(1,r.dx,r.dy);
+  r = joyRect2.testPt(tx,ty);
+  if (tid==joyTID2) joy(2,r.dx,r.dy);
 }
-function joy(dx,dy) {
-  player1.joyR = dx>joyRect.rx/3;
-  player1.joyL = dx<-joyRect.rx/3;
-  player1.joyU = dy>joyRect.ry/2;
-  player1.joyD = dy<-joyRect.ry/2;
+function joy(p,dx,dy) {
+  p = p==1?player1:player2;
+  p.joyR = dx>joyRect1.rx/3;
+  p.joyL = dx<-joyRect1.rx/3;
+  p.joyU = dy>joyRect1.ry/2;
+  p.joyD = dy<-joyRect1.ry/2;
 }
 function touchEnd(tx, ty, tid) {
   touching = false;
-  if (tid==joyTID) {
-    joyTID = null;
+  if (tid==joyTID1) {
+    joyTID1 = null;
     player1.joyL=player1.joyR=player1.joyU=player1.joyD=false;
+  }
+  if (tid==joyTID2) {
+    joyTID2 = null;
+    player2.joyL=player2.joyR=player2.joyU=player2.joyD=false;
   }
 }
 
@@ -36,7 +52,7 @@ function rectCenter(x,y,rx,ry) {
     return Math.abs(this.x-o.x)<this.rx+o.rx && Math.abs(this.y-o.y)<this.ry+o.ry;
   },testPt:function(x,y){
     var dx=x-this.x,dy=y-this.y;
-    return {dx:dx,dy:dy, g:Math.abs(dx)<joyRect.rx&&Math.abs(dy)<joyRect.ry};
+    return {dx:dx,dy:dy, g:Math.abs(dx)<this.rx&&Math.abs(dy)<this.ry};
   }};
 }
 function rectCorner(x,y,w,h) {
@@ -68,9 +84,10 @@ function initBuffers() {
 var terrain = [];
 var solidTex,groundTex;
 var entities = [];
-var player1;
+var player1,player2;
 function initGame() {
-  entities.push(player1=Player(150,50));
+  entities.push(player1=Player(135,50));
+  entities.push(player2=Player(165,50));
   
   terrain.push(rectCorner(0,0,300,17));
   
@@ -127,7 +144,7 @@ function drawFrame(time) {try{
   // view transform
   pushTM();
   mat4.translate(tMat,tMat,[Math.floor(-camX+width/2),0,0]);
-  camX -= (camX-player1.rect.x)*2*dt;
+  camX -= (camX-(player1.rect.x+player2.rect.x)/2)*3*dt;
   setTMat();
   
   dt_acc += dt;
@@ -146,15 +163,103 @@ function drawFrame(time) {try{
   popTM();
   setTMat();
   bindTex(joyBgTex);
-  drawRect(joyRect);
+  drawRect(joyRect1);
+  drawRect(joyRect2);
   bindTex(atkTex);
-  drawRect(atkRect);
+  drawRect(atkRect1);
+  drawRect(atkRect2);
   bindTex(jmpTex);
-  drawRect(jmpRect);
+  drawRect(jmpRect1);
+  drawRect(jmpRect2);
   
   var err = gl.getError();
   if (err==0) requestAnimationFrame(drawFrame);
   else alert("GL error: "+err);
-}catch(e){alert("drawFrame: "+e.message)}}
+}catch(e){alert("drawFrame: "+e)}}
 
+
+
+function Player(x,y) {
+  return {
+    rect: rectCenter(x,y,5,10),
+    vx:0, vy:0,
+    oldX:x, oldY:y,
+    onGround: false,
+    joyL:false,joyR:false,joyU:false,joyD:false,
+    btnAtk:false,btnJmp:false,
+    frame:
+function(dt,t) {
+  var r = this.rect;
+  if (this.joyL)
+    r.x -= 100*dt;
+  if (this.joyR)
+    r.x += 100*dt;
+  if (this.btnJmp) {
+    this.btnJmp = false;
+    if (this.onGround)
+      this.vy = 300;
+  }
+  this.vy -= 1000*dt;
+  r.x += this.vx*dt;
+  r.y += this.vy*dt;
+  this.doCollide();
+  
+  bindTex(null);
+  drawRect(r);
+  var a = this.joyD?Math.sin(t*8):0;
+  drawSwordHeld(r.x+4,r.y+2,a/2);
+  return false;
+},
+  doCollide:
+function() {
+  this.onGround = false;
+  var newY = this.rect.y;
+  this.rect.y = this.oldY;
+  var res = checkTerrain(this.rect);
+  if (res) {
+    if (this.rect.x-this.oldX>0)
+      this.rect.x = res.x-(res.rx+this.rect.rx);
+    else
+      this.rect.x = res.x+(res.rx+this.rect.rx);
+    this.vx = 0;
+  }
+  this.rect.y = newY;
+  res = checkTerrain(this.rect);
+  if (res) {
+    if (this.rect.y-this.oldY>0)
+      this.rect.y = res.y-(res.ry+this.rect.ry);
+    else {
+      this.rect.y = res.y+(res.ry+this.rect.ry);
+      this.onGround = true;
+    }
+    this.vy = 0;
+  }
+  this.oldX = this.rect.x;
+  this.oldY = this.rect.y;
+}
+  };
+}
+
+var drawSwordCenter,drawSwordHeld;
+function initSword() {
+  var rtt = createRTT(16,16);
+  var r = rectCorner(0,0,16,16);
+  drawSwordCenter = function(x,y,a) {
+    rtt.start();
+    mat4.translate(tMat,tMat,[8,8,0]);
+    mat4.rotateZ(tMat,tMat,a);
+    setTMat();
+    bindTex(solidTex);
+    drawRect(rectCenter(0,0,8,0.5),[0.8,0.8,0.8]);
+    drawRect(rectCenter(-5.5,0,0.5,1.5),[0.8,0.8,0.8]);
+    rtt.stop();
+    bindTex(rtt.tex);
+    r.x = x;
+    r.y = y;
+    drawRect(r);
+  }
+  drawSwordHeld = function(x,y,a) {
+    drawSwordCenter(x+Math.cos(a)*5,y+Math.sin(a)*5,a);
+  }
+};
 
