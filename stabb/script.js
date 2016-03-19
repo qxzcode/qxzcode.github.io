@@ -89,16 +89,16 @@ function initGame() {
   entities.push(player1=Player(135,50));
   entities.push(player2=Player(165,50));
   
-  terrain.push(rectCorner(0,0,300,17));
+  terrain.push(rectCorner(0,0,300,27));
   
-  var img = texImg(300,20);
+  var img = texImg(300,30);
   for (var x=0; x<300; x++) {
-    var h = 20-Math.random()*3;
-    var gh = 17-Math.random()*2;
-    for (var y=0; y<20; y++) {
+    var h = 30-Math.random()*3;
+    var gh = 27-Math.random()*2;
+    for (var y=0; y<30; y++) {
       var c;
       if (y<h) {
-        if (y<16 && Math.random()<0.02) {
+        if (y<26 && Math.random()<0.02) {
           var b = Math.random()*0.1+0.45;
           c = [b,b,b];
         } else {
@@ -108,7 +108,7 @@ function initGame() {
         }
       } else
         c = [0,0,0,0];
-      var m = (y/20)*0.5+0.5;
+      var m = (y/30)*0.7+0.3;
       c[0]*=m;c[1]*=m;c[2]*=m;
       img.set(x,y,c);
     }
@@ -176,6 +176,7 @@ function drawFrame(time) {try{
   if (err==0) requestAnimationFrame(drawFrame);
   else alert("GL error: "+err);
 }catch(e){alert("drawFrame: "+e)}}
+
 
 
 
@@ -248,7 +249,6 @@ function initSword() {
     rtt.start();
     mat4.translate(tMat,tMat,[8,8,0]);
     mat4.rotateZ(tMat,tMat,a);
-    setTMat();
     bindTex(solidTex);
     drawRect(rectCenter(0,0,8,0.5),[0.8,0.8,0.8]);
     drawRect(rectCenter(-5.5,0,0.5,1.5),[0.8,0.8,0.8]);
@@ -262,4 +262,3 @@ function initSword() {
     drawSwordCenter(x+Math.cos(a)*5,y+Math.sin(a)*5,a);
   }
 };
-
