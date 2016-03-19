@@ -82,4 +82,4 @@ function initSword() {
   drawSwordHeld = function(x,y,a) {
     drawSwordCenter(x+Math.cos(a)*5,y+Math.sin(a)*5,a);
   }
-};
+}; 
