@@ -32,47 +32,44 @@ return t[0]=-n*e,t[1]=-r*e,t[2]=-o*e,t[3]=l*e,t},e.conjugate=function(t,a){retur
 
 // MY CODE
 
-var canvas,webglCanvas;
-var ctx,gl;
+var canvas,gl;
 window.addEventListener('load', function(e) {try{
   canvas = document.getElementById('c');
-  //ctx = canvas.getContext("2d");
-  webglCanvas = canvas;//document.createElement("canvas");
-  gl = webglCanvas.getContext("webgl",{alpha:false});
+  gl = canvas.getContext("webgl",{alpha:false});
   initGL();
   initGame();
   window.addEventListener("mousedown", function(event) {
     event = event||window.event;
     event.preventDefault();
-    touchStart(event.clientX, innerHeight-event.clientY, 0);
+    touchStart(event.clientX/pxScale, (innerHeight-event.clientY)/pxScale, 0);
   }, false);
   window.addEventListener("mousemove", function(event) {
     event = event||window.event;
     event.preventDefault();
-    touchMove(event.clientX, innerHeight-event.clientY, 0);
+    touchMove(event.clientX/pxScale, (innerHeight-event.clientY)/pxScale, 0);
   }, false);
   window.addEventListener("mouseup", function(event) {
     event = event||window.event;
     event.preventDefault();
-    touchEnd(event.clientX, innerHeight-event.clientY, 0);
+    touchEnd(event.clientX/pxScale, (innerHeight-event.clientY)/pxScale, 0);
   }, false);
   window.addEventListener("touchstart", function(event) {
     event.preventDefault();
     var ts = event.changedTouches;
     for (var i=0;i<ts.length;i++)
-      touchStart(ts[i].pageX, innerHeight-ts[i].pageY, ts[i].identifier);
+      touchStart(ts[i].pageX/pxScale, (innerHeight-ts[i].pageY)/pxScale, ts[i].identifier);
   }, false);
   window.addEventListener("touchmove", function(event) {
     event.preventDefault();
     var ts = event.changedTouches;
     for (var i=0;i<ts.length;i++)
-      touchMove(ts[i].pageX, innerHeight-ts[i].pageY, ts[i].identifier);
+      touchMove(ts[i].pageX/pxScale, (innerHeight-ts[i].pageY)/pxScale, ts[i].identifier);
   }, false);
   function tEnd(event) {
     event.preventDefault();
     var ts = event.changedTouches;
     for (var i=0;i<ts.length;i++)
-      touchEnd(ts[i].pageX, innerHeight-ts[i].pageY, ts[i].identifier);
+      touchEnd(ts[i].pageX/pxScale, (innerHeight-ts[i].pageY)/pxScale, ts[i].identifier);
   }
   window.addEventListener("touchend", tEnd, false);
   window.addEventListener("touchcancel", tEnd, false);
@@ -80,9 +77,6 @@ window.addEventListener('load', function(e) {try{
 }catch(e){alert("onload: "+e.message)}}, false);
 
 var width, height, fWidth, fHeight, pxScale=5;
-function getPx(x) {
-  return Math.ceil(x/pxScale)*pxScale;
-}
 function onResize() {
   scrollTo(0,0);
   var ratio = window.devicePixelRatio || 1;
@@ -90,13 +84,50 @@ function onResize() {
   height=(fHeight=window.innerHeight)/pxScale;
   canvas.style.width = fWidth+"px";
   canvas.style.height = fHeight+"px";
-  webglCanvas.width=fWidth*ratio;
-  webglCanvas.height=fHeight*ratio;
-  gl.viewport(0,0, webglCanvas.width,webglCanvas.height);
+  canvas.width=fWidth*ratio;
+  canvas.height=fHeight*ratio;
+  gl.viewport(0,0, canvas.width,canvas.height);
   popTM();
   mat4.ortho(tMat,0,fWidth,0,fHeight,-1,1);
   mat4.scale(tMat,tMat,[pxScale,pxScale,1]);
   pushTM();
+  initJoy();
+}
+
+var tMat=mat4.create();
+var shader;
+function initGL() {
+  shader = createShaderProg("\
+attribute vec3 inVert;\
+attribute vec2 inTexCoord;\
+uniform mat4 tMat;\
+varying vec2 texCoord;\
+void main() {\
+  gl_Position = tMat*vec4(inVert,1.0);\
+  texCoord = inTexCoord;\
+}",
+"\
+precision mediump float;\
+uniform vec4 color;\
+uniform sampler2D sampler;\
+varying vec2 texCoord;\
+void main() {\
+  gl_FragColor = color*texture2D(sampler,texCoord);\
+}");
+  gl.useProgram(shader);
+  shader.inVertLoc = gl.getAttribLocation(shader,"inVert");
+  gl.enableVertexAttribArray(shader.inVertLoc);
+  shader.inTexCoordLoc = gl.getAttribLocation(shader,"inTexCoord");
+  gl.enableVertexAttribArray(shader.inTexCoordLoc);
+  shader.tMatLoc = gl.getUniformLocation(shader,"tMat");
+  shader.colorLoc = gl.getUniformLocation(shader,"color");
+  
+  gl.clearColor(0.2, 0.2, 0.2, 1.0);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  
+  onResize();
+  initBuffers();
 }
 
 function createShaderProg(vSrc, fSrc) {
@@ -176,7 +207,45 @@ function texImg(w,h) {
     }
   };
 }
+var joyRect,jmpRect,atkRect;
+var joyBgTex,jmpTex,atkTex;
+function initJoy() {
+  var minD = Math.min(width,height);
+  
+  var joyS = Math.ceil(minD/10), joyS2=joyS*joyS;
+  joyRect = rectCenter(width*2/3,width/8,joyS,joyS);
+  var img = texImg(joyS*2,joyS*2);
+  for (var x=0; x<joyS*2; x++) {
+    for (var y=0; y<joyS*2; y++) {
+      var dx=x-joyS,dy=y-joyS;
+      img.set(x,y,dx*dx+dy*dy<joyS2?[1,1,1,.1]:[0,0,0,0]);
+    }
+  }
+  joyBgTex = img.toTex();
+  
+  var btnS = Math.floor(minD/7/2)*2+1,hBtnS=Math.floor(btnS/2);
+  atkRect = rectCorner(width*5/6,width/5,btnS,btnS);
+  img = texImg(btnS,btnS);
+  for (var x=0; x<btnS; x++) {
+    for (var y=0; y<btnS; y++) {
+      var dx=Math.abs(x-hBtnS),dy=Math.abs(y-hBtnS);
+      img.set(x,y,Math.min(dx,dy)%2?[1,1,1,.1]:[0,0,0,0]);
+    }
+  }
+  atkTex = img.toTex();
+  
+  jmpRect = rectCorner(width*5/6,width/5+btnS+3,btnS,btnS);
+  img = texImg(btnS,btnS);
+  for (var x=0; x<btnS; x++) {
+    for (var y=0; y<btnS; y++) {
+      var dx=Math.abs(x-hBtnS),dy=Math.abs(y-hBtnS);
+      img.set(x,y,Math.max(dx,dy)%2?[1,1,1,.1]:[0,0,0,0]);
+    }
+  }
+  jmpTex = img.toTex();
+}
   </script>
+  <script src="style.css"></script>
   <script src="script2.js"></script>
   <script src="script.js"></script>
 </head>
