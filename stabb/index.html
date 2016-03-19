@@ -188,6 +188,9 @@ function drawBuffer(model,mode) {
 function bindTex(tex) {
   gl.bindTexture(gl.TEXTURE_2D, tex);
 }
+function bindFB(fb) {
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+}
 function texImg(w,h) {
   var d = new Uint8ClampedArray(w*h*4);
   return {
@@ -196,16 +199,64 @@ function texImg(w,h) {
     get:function(x,y){var i=(x+y*w)*4;return [d[i]/255,d[i+1]/255,d[i+2]/255,d[i+3]/255]},
     set:function(x,y,c){var i=(x+y*w)*4;d[i]=c[0]*255;d[i+1]=c[1]*255;d[i+2]=c[2]*255;d[i+3]=c.length<4?255:c[3]*255},
     toTex:function() {
-      var tex = gl.createTexture();
-      bindTex(tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,gl.RGBA, gl.UNSIGNED_BYTE, new ImageData(d,w,h));
-      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-     gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-      return tex;
+      return createTex(new ImageData(d,w,h));
     }
   };
+}
+function createCanvas(w,h) {
+  var c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  return {cv:c,ctx:c.getContext("2d")};
+}
+var rttBound=false;
+function createRTT(w,h) {
+  var fb = gl.createFramebuffer();
+  bindFB(fb);
+  fb.width = w;
+  fb.height = h;
+  var tex = createTex();
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, fb.width, fb.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  bindFB(null);
+  return {
+    fb:fb, tex:tex,
+    start:function(){
+      rttBound = true;
+      bindFB(fb);
+      gl.viewport(0,0,w,h);
+      gl.clearColor(0,0,0,0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      pushTM();
+      mat4.ortho(tMat,0,w,0,h,-1,1);
+      setTMat();
+    },
+    stop:function(){
+      rttBound = false;
+      bindFB(null);
+      gl.clearColor(0.2, 0.2, 0.2, 1.0);
+      gl.viewport(0,0,canvas.width,canvas.height);
+      popTM();
+      setTMat();
+    },
+    del:function(){
+      gl.deleteFramebuffer(fb);
+      gl.deleteTexture(tex);
+    }
+  };
+}
+function createTex(data) {
+  var tex = gl.createTexture();
+  bindTex(tex);
+  if (data) updateTex(data);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  return tex;
+}
+function updateTex(data) {
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,data);
 }
 var joyRect,jmpRect,atkRect;
 var joyBgTex,jmpTex,atkTex;
