@@ -210,6 +210,7 @@ function drawFrame(time) {try{
 
 
 
+
 function Player(x,y) {
   return {
     rect: rectCenter(x,y,5,10),
@@ -219,6 +220,7 @@ function Player(x,y) {
     joyL:false,joyR:false,joyU:false,joyD:false,
     btnAtk:false,btnJmp:false,
     sword:null,
+    lunge:0,parry:0,
     frame:
 function(dt,t) {
   // move and handle collisions with terrain
@@ -241,25 +243,42 @@ function(dt,t) {
     if (this.onGround)
       this.vy = 300;
   }
+  if (this.btnAtk) {
+    this.btnAtk = false;
+    if (this.lunge<=0)
+      this.lunge = .25;
+  }
+  this.lunge -= dt;
   this.vy -= 1000*dt;
   r.x += this.vx*dt;
   r.y += this.vy*dt;
   this.doCollide();
   
-  // check collision with opponent's sword
+  // check collisions with opponent & their sword
   var op = this==player1?player2:player1;
+  var opSide = op.rect.x>r.x;
   if (op.sword) {
     if (op.sword.touching(r.toRRect())) {
       this.sword = null;
       return true;
+    }
+    if (this.sword&&op.sword.touching(this.sword)) {
+      this.vx += opSide?-50:50;
     }
   }
   
   // draw this player
   bindTex(null);
   drawRect(r);
-  var a = this.joyD?Math.sin(t*8):0;
-  this.sword = drawSwordHeld(r.x+4,r.y+2,a/2);
+  var a = this.joyD?Math.sin(t*16)/3:0;
+  var l = this.lunge*4;
+  var tx = l>0? (l-l*l)*4*10 : 0;
+  tx += 4;
+  if (!opSide) {
+    a = Math.PI-a;
+    tx = -tx;
+  }
+  this.sword = drawSwordHeld(r.x+tx,r.y+2,a);
   return false;
 },
   doCollide:
@@ -313,4 +332,3 @@ function initSword() {
     return drawSwordCenter(x+Math.cos(a)*5,y+Math.sin(a)*5,a);
   }
 };
-
