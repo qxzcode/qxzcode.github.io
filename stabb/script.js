@@ -47,13 +47,44 @@ function touchEnd(tx, ty, tid) {
   }
 }
 
+function rrectCenter(x,y,rx,ry,a) {
+  return {x:x,y:y,rx:rx,ry:ry,a:a,touching:function(o){
+    var t = this;
+    var vs = [[1,1],[1,-1],[-1,-1],[-1,1]];
+    var m = mat2d.create();
+    mat2d.translate(m,m,[t.x,t.y]);
+    mat2d.rotate(m,m,t.a);
+    var aVerts = vs.map(function(v){return vec2.transformMat2d([],[v[0]*t.rx,v[1]*t.ry],m)});
+    mat2d.identity(m);
+    mat2d.translate(m,m,[o.x,o.y]);
+    mat2d.rotate(m,m,o.a);
+    var bVerts = vs.map(function(v){return vec2.transformMat2d([],[v[0]*o.rx,v[1]*o.ry],m)});
+    function testAxis(axis) {
+      function proj(v){return vec2.dot(axis,v)}
+      var minA=null,maxA=null,minB=null,maxB=null;
+      for (var i in aVerts) {
+        var x = proj(aVerts[i]);
+        if (minA==null||x<minA) minA=x;
+        if (maxA==null||x>maxA) maxA=x;
+        x = proj(bVerts[i]);
+        if (minB==null||x<minB) minB=x;
+        if (maxB==null||x>maxB) maxB=x;
+      }
+      return minA<maxB && maxA>minB;
+    }
+    var ca=Math.cos(t.a),sa=Math.sin(t.a),
+        cb=Math.cos(o.a),sb=Math.sin(o.a);
+    return testAxis([sa,ca]) && testAxis([ca,-sa]) &&
+           testAxis([sb,cb]) && testAxis([cb,-sb]);
+  }};
+}
 function rectCenter(x,y,rx,ry) {
   return {x:x,y:y,rx:rx,ry:ry,touching:function(o){
     return Math.abs(this.x-o.x)<this.rx+o.rx && Math.abs(this.y-o.y)<this.ry+o.ry;
   },testPt:function(x,y){
     var dx=x-this.x,dy=y-this.y;
     return {dx:dx,dy:dy, g:Math.abs(dx)<this.rx&&Math.abs(dy)<this.ry};
-  }};
+  },toRRect:function(){return rrectCenter(this.x,this.y,this.rx,this.ry,0)}};
 }
 function rectCorner(x,y,w,h) {
   return rectCenter(x+w/2,y+h/2,w/2,h/2);
@@ -179,7 +210,6 @@ function drawFrame(time) {try{
 
 
 
-
 function Player(x,y) {
   return {
     rect: rectCenter(x,y,5,10),
@@ -188,13 +218,24 @@ function Player(x,y) {
     onGround: false,
     joyL:false,joyR:false,joyU:false,joyD:false,
     btnAtk:false,btnJmp:false,
+    sword:null,
     frame:
 function(dt,t) {
+  // move and handle collisions with terrain
   var r = this.rect;
-  if (this.joyL)
-    r.x -= 100*dt;
-  if (this.joyR)
-    r.x += 100*dt;
+  var spd = 100, acc = 800;
+  if (this.joyL) {
+    this.vx -= acc*dt;
+    if (this.vx<-spd) this.vx=-spd;
+  } else if (this.joyR) {
+    this.vx += acc*dt;
+    if (this.vx>spd) this.vx=spd;
+  } else {
+    var p = this.vx<0;
+    this.vx = Math.abs(this.vx)-acc*dt;
+    if (this.vx<0) this.vx=0;
+    if (p) this.vx*=-1;
+  }
   if (this.btnJmp) {
     this.btnJmp = false;
     if (this.onGround)
@@ -205,10 +246,20 @@ function(dt,t) {
   r.y += this.vy*dt;
   this.doCollide();
   
+  // check collision with opponent's sword
+  var op = this==player1?player2:player1;
+  if (op.sword) {
+    if (op.sword.touching(r.toRRect())) {
+      this.sword = null;
+      return true;
+    }
+  }
+  
+  // draw this player
   bindTex(null);
   drawRect(r);
   var a = this.joyD?Math.sin(t*8):0;
-  drawSwordHeld(r.x+4,r.y+2,a/2);
+  this.sword = drawSwordHeld(r.x+4,r.y+2,a/2);
   return false;
 },
   doCollide:
@@ -244,7 +295,6 @@ function() {
 var drawSwordCenter,drawSwordHeld;
 function initSword() {
   var rtt = createRTT(16,16);
-  var r = rectCorner(0,0,16,16);
   drawSwordCenter = function(x,y,a) {
     rtt.start();
     mat4.translate(tMat,tMat,[8,8,0]);
@@ -254,11 +304,13 @@ function initSword() {
     drawRect(rectCenter(-5.5,0,0.5,1.5),[0.8,0.8,0.8]);
     rtt.stop();
     bindTex(rtt.tex);
-    r.x = x;
-    r.y = y;
+    var r = rrectCenter(x,y,8,8,a);
     drawRect(r);
+    r.ry=0.5;
+    return r;
   }
   drawSwordHeld = function(x,y,a) {
-    drawSwordCenter(x+Math.cos(a)*5,y+Math.sin(a)*5,a);
+    return drawSwordCenter(x+Math.cos(a)*5,y+Math.sin(a)*5,a);
   }
 };
+
