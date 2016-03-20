@@ -63,7 +63,7 @@ function(dt,t) {
   drawRect(r);
   var a = this.parry<0?0:-Math.sin(this.parry*30)/5;
   var l = this.lunge*4;
-  var tx = l>0? (l-l*l)*4*10 : 0;
+  var tx = l>0? (l-l*l)*4*15 : 0;
   tx += 4;
   if (!opSide) {
     a = Math.PI-a;
