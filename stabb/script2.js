@@ -12,6 +12,7 @@ function Player(x,y) {
     sword:null,
     swordPos:2,swordTar:2,
     lunge:0,parry:0,
+    roll:0,lastRolling:false,
     frame:
 function(dt,t) {
   // move and handle collisions with terrain
@@ -43,12 +44,21 @@ function(dt,t) {
     this.swordTar += 7;
   }
   this.lastJoyU = this.joyU;
-  if (this.joyD&&!this.lastJoyD&&this.swordTar>0) {
-    this.swordTar -= 7;
+  if (this.joyD&&!this.lastJoyD) {
+    this.swordTar = -5;
+    this.roll = 0.2;
   }
   this.lastJoyD = this.joyD;
+  var rolling = this.roll<0 && this.joyD;
+  r.ry = rolling? 5 : 10;
+  if (!rolling&&this.lastRolling) {
+    r.y += 5;
+    this.oldY += 5;
+  }
+  this.lastRolling = rolling;
   this.lunge -= dt;
   this.parry -= dt;
+  this.roll -= dt;
   this.vy -= 1000*dt;
   r.x += this.vx*dt;
   r.y += this.vy*dt;
@@ -89,6 +99,7 @@ function(dt,t) {
       this.swordPos = this.swordTar;
   }
   this.sword = drawSwordHeld(r.x+tx,r.y+this.swordPos,a);
+  if (rolling) this.sword = null;
   return false;
 },
   doCollide:
