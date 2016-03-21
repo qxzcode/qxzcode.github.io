@@ -32,8 +32,8 @@ function joy(p,dx,dy) {
   p = p==1?player1:player2;
   p.joyR = dx>joyRect1.rx/3;
   p.joyL = dx<-joyRect1.rx/3;
-  p.joyU = dy>joyRect1.ry/2;
-  p.joyD = dy<-joyRect1.ry/2;
+  p.joyU = dy>joyRect1.ry/3;
+  p.joyD = dy<-joyRect1.ry/4;
 }
 function touchEnd(tx, ty, tid) {
   touching = false;
