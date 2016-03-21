@@ -9,8 +9,9 @@ function Player(x,y) {
     joyL:false,joyR:false,joyU:false,joyD:false,
     lastJoyU:false,lastJoyD:false,
     btnAtk:false,btnJmp:false,
-    sword:null,
+    sword:null,hasSword:true,
     swordPos:2,swordTar:2,
+    lastSwordY:null,
     lunge:0,parry:0,
     roll:0,lastRolling:false,
     frame:
@@ -30,6 +31,20 @@ function(dt,t) {
     if (this.vx<0) this.vx=0;
     if (p) this.vx*=-1;
   }
+  if (this.joyU&&!this.lastJoyU&&this.swordTar<7) {
+    this.swordTar += 7;
+  }
+  this.lastJoyU = this.joyU;
+  if (this.joyD&&!this.lastJoyD) {
+    if (this.swordTar>0) this.swordTar -= 7;
+    this.roll = 0.2;
+  }
+  this.lastJoyD = this.joyD;
+  var rolling = this.roll<0 && this.joyD;
+  r.ry = rolling? 5 : 10;
+  if (!rolling&&this.lastRolling){r.y+=5;this.oldY+=5;this.swordTar=this.swordPos=-5}
+  if (rolling&&!this.lastRolling){r.y-=5;this.oldY-=5}
+  this.lastRolling = rolling;
   if (this.btnJmp) {
     this.btnJmp = false;
     if (this.onGround)
@@ -37,25 +52,9 @@ function(dt,t) {
   }
   if (this.btnAtk) {
     this.btnAtk = false;
-    if (this.lunge<=0)
+    if (this.lunge<=0&&!rolling)
       this.lunge = .25;
   }
-  if (this.joyU&&!this.lastJoyU&&this.swordTar<7) {
-    this.swordTar += 7;
-  }
-  this.lastJoyU = this.joyU;
-  if (this.joyD&&!this.lastJoyD) {
-    this.swordTar = -5;
-    this.roll = 0.2;
-  }
-  this.lastJoyD = this.joyD;
-  var rolling = this.roll<0 && this.joyD;
-  r.ry = rolling? 5 : 10;
-  if (!rolling&&this.lastRolling) {
-    r.y += 5;
-    this.oldY += 5;
-  }
-  this.lastRolling = rolling;
   this.lunge -= dt;
   this.parry -= dt;
   this.roll -= dt;
@@ -73,8 +72,12 @@ function(dt,t) {
       return true;
     }
     if (this.sword&&op.sword.touching(this.sword)) {
-      this.vx = opSide?-100:100;
-      if (this.parry<0) this.parry = Math.PI/15;
+      if (this.sword.y!=this.lastSwordY&&this.lastSwordY!=null) {
+        op.hasSword = false;
+      } else {
+        this.vx = opSide?-100:100;
+        if (this.parry<0) this.parry = Math.PI/15;
+      }
     }
   }
   
@@ -98,8 +101,8 @@ function(dt,t) {
     if (this.swordPos>this.swordTar)
       this.swordPos = this.swordTar;
   }
-  this.sword = drawSwordHeld(r.x+tx,r.y+this.swordPos,a);
-  if (rolling) this.sword = null;
+  this.lastSwordY = this.sword && this.sword.y;
+  this.sword = rolling||!this.hasSword?null:drawSwordHeld(r.x+tx,r.y+this.swordPos,a);
   return false;
 },
   doCollide:
