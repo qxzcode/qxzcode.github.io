@@ -11,7 +11,7 @@ function Player(x,y) {
     btnAtk:false,btnJmp:false,
     sword:null,hasSword:true,
     swordPos:2,swordTar:2,
-    lastSwordY:null,
+    curSY:null,lastSY:null,
     lunge:0,parry:0,
     roll:0,lastRolling:false,
     frame:
@@ -72,7 +72,7 @@ function(dt,t) {
       return true;
     }
     if (this.sword&&op.sword.touching(this.sword)) {
-      if (this.sword.y!=this.lastSwordY&&this.lastSwordY!=null) {
+      if (this.lastSY!=null && this.lastSY!=this.curSY) {
         op.hasSword = false;
       } else {
         this.vx = opSide?-100:100;
@@ -101,8 +101,9 @@ function(dt,t) {
     if (this.swordPos>this.swordTar)
       this.swordPos = this.swordTar;
   }
-  this.lastSwordY = this.sword && this.sword.y;
-  this.sword = rolling||!this.hasSword?null:drawSwordHeld(r.x+tx,r.y+this.swordPos,a);
+  this.lastSY = this.curSY;
+  this.curSY = this.sword && r.y+this.swordPos;
+  this.sword = rolling||!this.hasSword?null:drawSwordHeld(r.x+tx,this.curSY,a);
   return false;
 },
   doCollide:
