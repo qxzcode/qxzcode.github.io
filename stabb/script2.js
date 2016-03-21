@@ -7,8 +7,10 @@ function Player(x,y) {
     oldX:x, oldY:y,
     onGround: false,
     joyL:false,joyR:false,joyU:false,joyD:false,
+    lastJoyU:false,lastJoyD:false,
     btnAtk:false,btnJmp:false,
     sword:null,
+    swordPos:2,swordTar:2,
     lunge:0,parry:0,
     frame:
 function(dt,t) {
@@ -37,6 +39,14 @@ function(dt,t) {
     if (this.lunge<=0)
       this.lunge = .25;
   }
+  if (this.joyU&&!this.lastJoyU&&this.swordTar<7) {
+    this.swordTar += 7;
+  }
+  this.lastJoyU = this.joyU;
+  if (this.joyD&&!this.lastJoyD&&this.swordTar>0) {
+    this.swordTar -= 7;
+  }
+  this.lastJoyD = this.joyD;
   this.lunge -= dt;
   this.parry -= dt;
   this.vy -= 1000*dt;
@@ -63,13 +73,22 @@ function(dt,t) {
   drawRect(r);
   var a = this.parry<0?0:-Math.sin(this.parry*30)/5;
   var l = this.lunge*4;
-  var tx = l>0? (l-l*l)*4*15 : 0;
+  var tx = l>0? (l-l*l)*4*20 : 0;
   tx += 4;
   if (!opSide) {
     a = Math.PI-a;
     tx = -tx;
   }
-  this.sword = drawSwordHeld(r.x+tx,r.y+2,a);
+  if (this.swordPos>this.swordTar) {
+    this.swordPos -= 100*dt;
+    if (this.swordPos<this.swordTar)
+      this.swordPos = this.swordTar;
+  } else {
+    this.swordPos += 100*dt;
+    if (this.swordPos>this.swordTar)
+      this.swordPos = this.swordTar;
+  }
+  this.sword = drawSwordHeld(r.x+tx,r.y+this.swordPos,a);
   return false;
 },
   doCollide:
