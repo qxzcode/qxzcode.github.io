@@ -258,27 +258,33 @@ function createTex(data) {
 function updateTex(data) {
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,data);
 }
-var joyRect1,jmpRect1,atkRect1,joyRect2,jmpRect2,atkRect2;
+var uRect1,dRect1,lRect1,rRect1,jmpRect1,atkRect1;
+var uRect2,dRect2,lRect2,rRect2,jmpRect2,atkRect2;
 var joyBgTex,jmpTex,atkTex;
 function initJoy() {
   var minD = Math.min(width,height);
   function mirror(r){return rectCenter(width-r.x,r.y,r.rx,r.ry)}
   
-  var joyS = Math.ceil(minD/10), joyS2=joyS*joyS;
+  var moveS = Math.ceil(minD/8), moveR = moveS/2;
   var btnS = Math.floor(minD/7/2)*2+1,hBtnS=Math.floor(btnS/2);
   
-  joyRect1 = rectCenter(btnS+15+joyS,4+joyS,joyS,joyS);
-  joyRect2 = mirror(joyRect1);
-  var img = texImg(joyS*2,joyS*2);
-  for (var x=0; x<joyS*2; x++) {
-    for (var y=0; y<joyS*2; y++) {
-      var dx=x-joyS,dy=y-joyS;
-      img.set(x,y,dx*dx+dy*dy<joyS2?[1,1,1,.1]:[0,0,0,0]);
+  var bx=8+btnS, dbx=moveS+2;
+  rRect2=mirror(lRect1=rectCorner(bx-dbx,4,moveS,moveS));
+  dRect2=mirror(dRect1=rectCorner(bx,4,moveS,moveS));
+  uRect2=mirror(uRect1=rectCorner(bx,6+moveS,moveS,moveS));
+  lRect2=mirror(rRect1=rectCorner(bx+dbx,4,moveS,moveS));
+  var img = texImg(moveS,moveS);
+  for (var x=0; x<moveS; x++) {
+    for (var y=0; y<moveS; y++) {
+      var dx=x-moveS,dy=y-moveS;
+      img.set(x,y,(dx-dy+1)%3?[1,1,1,.1]:[0,0,0,0]);
     }
   }
+  gl.deleteTexture(joyBgTex);
   joyBgTex = img.toTex();
   
-  atkRect1 = rectCorner(4,minD/5,btnS,btnS);
+  var by=Math.max(minD/5,8+moveS);
+  atkRect1 = rectCorner(4,by,btnS,btnS);
   atkRect2 = mirror(atkRect1);
   img = texImg(btnS,btnS);
   for (var x=0; x<btnS; x++) {
@@ -287,9 +293,10 @@ function initJoy() {
       img.set(x,y,Math.min(dx,dy)%2?[1,1,1,.1]:[0,0,0,0]);
     }
   }
+  gl.deleteTexture(atkTex);
   atkTex = img.toTex();
   
-  jmpRect1 = rectCorner(4,minD/5+btnS+3,btnS,btnS);
+  jmpRect1 = rectCorner(4,by+btnS+3,btnS,btnS);
   jmpRect2 = mirror(jmpRect1);
   img = texImg(btnS,btnS);
   for (var x=0; x<btnS; x++) {
@@ -298,6 +305,7 @@ function initJoy() {
       img.set(x,y,Math.max(dx,dy)%2?[1,1,1,.1]:[0,0,0,0]);
     }
   }
+  gl.deleteTexture(jmpTex);
   jmpTex = img.toTex();
 }
   </script>
