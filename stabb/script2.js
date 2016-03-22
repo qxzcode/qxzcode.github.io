@@ -6,8 +6,8 @@ function Player(x,y) {
     vx:0, vy:0,
     oldX:x, oldY:y,
     onGround: false,
-    joyL:false,joyR:false,joyU:false,joyD:false,
-    lastJoyU:false,lastJoyD:false,
+    joyL:null,joyR:null,joyU:null,joyD:null,
+    lastJoyU:null,lastJoyD:null,
     btnAtk:false,btnJmp:false,
     sword:null,hasSword:true,
     swordPos:2,swordTar:2,
@@ -22,10 +22,12 @@ function(dt,t) {
   if (this.joyL) {
     this.vx -= acc*dt;
     if (this.vx<-spd) this.vx=-spd;
-  } else if (this.joyR) {
+  }
+  if (this.joyR) {
     this.vx += acc*dt;
     if (this.vx>spd) this.vx=spd;
-  } else {
+  }
+  if (!this.joyR==!this.joyL) {
     var p = this.vx<0;
     this.vx = Math.abs(this.vx)-acc*dt;
     if (this.vx<0) this.vx=0;
@@ -150,7 +152,7 @@ function initSword() {
     bindTex(rtt.tex);
     var r = rrectCenter(x,y,8,8,a);
     drawRect(r);
-    r.ry=0.5;
+    r.ry=0.5+0.2; // a bit bigger than the sprite
     return r;
   }
   drawSwordHeld = function(x,y,a) {
