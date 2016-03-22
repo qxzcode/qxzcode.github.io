@@ -1,32 +1,22 @@
 
 var touching = false;
-var joyTID1,joyTID2;
 function touchStart(tx, ty, tid) {try{
   touching = true;
-  var r = joyRect1.testPt(tx,ty);
-  if (r.g) {
-    joyTID1 = tid;
-    joy(1,r.dx,r.dy);
-  }
-  r = joyRect2.testPt(tx,ty);
-  if (r.g) {
-    joyTID2 = tid;
-    joy(2,r.dx,r.dy);
-  }
-  if (atkRect1.testPt(tx,ty).g)
-    player1.btnAtk = true;
-  if (jmpRect1.testPt(tx,ty).g)
-    player1.btnJmp = true;
-  if (atkRect2.testPt(tx,ty).g)
-    player2.btnAtk = true;
-  if (jmpRect2.testPt(tx,ty).g)
-    player2.btnJmp = true;
+  if (atkRect1.testPt(tx,ty).g) player1.btnAtk = true;
+  if (jmpRect1.testPt(tx,ty).g) player1.btnJmp = true;
+  if (lRect1.testPt(tx,ty).g) player1.joyL = [tid];
+  if (rRect1.testPt(tx,ty).g) player1.joyR = [tid];
+  if (uRect1.testPt(tx,ty).g) player1.joyU = [tid];
+  if (dRect1.testPt(tx,ty).g) player1.joyD = [tid];
+  if (atkRect2.testPt(tx,ty).g) player2.btnAtk = true;
+  if (jmpRect2.testPt(tx,ty).g) player2.btnJmp = true;
+  if (lRect2.testPt(tx,ty).g) player2.joyL = [tid];
+  if (rRect2.testPt(tx,ty).g) player2.joyR = [tid];
+  if (uRect2.testPt(tx,ty).g) player2.joyU = [tid];
+  if (dRect2.testPt(tx,ty).g) player2.joyD = [tid];
 }catch(e){alert(e)}}
 function touchMove(tx, ty, tid) {
-  var r = joyRect1.testPt(tx,ty);
-  if (tid==joyTID1) joy(1,r.dx,r.dy);
-  r = joyRect2.testPt(tx,ty);
-  if (tid==joyTID2) joy(2,r.dx,r.dy);
+  
 }
 function joy(p,dx,dy) {
   p = p==1?player1:player2;
@@ -37,14 +27,14 @@ function joy(p,dx,dy) {
 }
 function touchEnd(tx, ty, tid) {
   touching = false;
-  if (tid==joyTID1) {
-    joyTID1 = null;
-    player1.joyL=player1.joyR=player1.joyU=player1.joyD=false;
-  }
-  if (tid==joyTID2) {
-    joyTID2 = null;
-    player2.joyL=player2.joyR=player2.joyU=player2.joyD=false;
-  }
+  if (tid==player1.joyL) player1.joyL = null;
+  if (tid==player1.joyR) player1.joyR = null;
+  if (tid==player1.joyU) player1.joyU = null;
+  if (tid==player1.joyD) player1.joyD = null;
+  if (tid==player2.joyL) player2.joyL = null;
+  if (tid==player2.joyR) player2.joyR = null;
+  if (tid==player2.joyU) player2.joyU = null;
+  if (tid==player2.joyD) player2.joyD = null;
 }
 
 function rrectCenter(x,y,rx,ry,a) {
@@ -194,8 +184,14 @@ function drawFrame(time) {try{
   popTM();
   setTMat();
   bindTex(joyBgTex);
-  drawRect(joyRect1);
-  drawRect(joyRect2);
+  drawRect(lRect1);
+  drawRect(rRect1);
+  drawRect(uRect1);
+  drawRect(dRect1);
+  drawRect(lRect2);
+  drawRect(rRect2);
+  drawRect(uRect2);
+  drawRect(dRect2);
   bindTex(atkTex);
   drawRect(atkRect1);
   drawRect(atkRect2);
