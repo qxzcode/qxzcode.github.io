@@ -77,8 +77,9 @@ window.addEventListener('load', function(e) {try{
   requestAnimationFrame(drawFrame);
 }catch(e){alert("onload: "+e)}}, false);
 
-var width, height, fWidth, fHeight, pxScale=4;
+var width, height, fWidth, fHeight, pxScale;
 function onResize() {
+  pxScale = Math.floor(Math.min(innerWidth,innerHeight)/150);
   scrollTo(0,0);
   var ratio = window.devicePixelRatio || 1;
   width=(fWidth=window.innerWidth)/pxScale;
