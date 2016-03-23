@@ -79,7 +79,7 @@ window.addEventListener('load', function(e) {try{
 
 var width, height, fWidth, fHeight, pxScale;
 function onResize() {
-  pxScale = Math.floor(Math.min(innerWidth,innerHeight)/150);
+  pxScale = Math.floor(Math.min(innerWidth,innerHeight)/160);
   scrollTo(0,0);
   var ratio = window.devicePixelRatio || 1;
   width=(fWidth=window.innerWidth)/pxScale;
