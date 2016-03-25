@@ -1,0 +1,21 @@
+@charset "UTF-8";
+
+body {
+  font-family: helvetica;
+}
+
+textarea {
+  font-family: courier;
+  width: 100%;
+  height: 100px;
+  padding: 5px;
+  margin: 5px;
+}
+
+input {
+  width: 50px;
+}
+
+#output, #input {
+  height: 200px;
+}
