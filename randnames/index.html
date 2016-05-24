@@ -76,11 +76,20 @@ td {
   background: radial-gradient(circle farthest-corner, #555, #444);
 }
 .word {
+  font-weight: bold;
+  font-size: 120%;
   animation: fade 0.7s;
+  display: block;
 }
 @keyframes fade {
-  0%,100% { opacity: 1 }
-  50% { opacity: 0 }
+  0%,100% {
+    opacity: 1;
+    transform: none;
+  }
+  50% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
 }
 
     </style>
