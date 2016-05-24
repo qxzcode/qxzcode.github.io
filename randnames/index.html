@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Random Name Generator</title>
+    <script src="script.js" charset="utf-8"></script>
+    <script src="english.js" charset="utf-8"></script>
+    <style media="screen">
+
+html {
+  height: 100%;
+}
+body {
+  height: 100%;
+  overflow-y: hidden;
+  text-align: center;
+  background-color: #004;
+  background: radial-gradient(circle farthest-corner, #005, #003);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: arial;
+}
+#content {
+  width: 500px;
+  border-radius: 1.5em;
+  border: 2px solid black;
+  background-color: #666;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+}
+.myButton {
+	-moz-box-shadow:inset 0px 0px 15px 3px #23395e;
+	-webkit-box-shadow:inset 0px 0px 15px 3px #23395e;
+	box-shadow:inset 0px 0px 15px 3px #23395e;
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #2e466e), color-stop(1, #415989));
+	background:-moz-linear-gradient(top, #2e466e 5%, #415989 100%);
+	background:-webkit-linear-gradient(top, #2e466e 5%, #415989 100%);
+	background:-o-linear-gradient(top, #2e466e 5%, #415989 100%);
+	background:-ms-linear-gradient(top, #2e466e 5%, #415989 100%);
+	background:linear-gradient(to bottom, #2e466e 5%, #415989 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#2e466e', endColorstr='#415989',GradientType=0);
+	background-color:#2e466e;
+	-moz-border-radius:17px;
+	-webkit-border-radius:17px;
+	border-radius:17px;
+	border:1px solid #1f2f47;
+	display:inline-block;
+	cursor:pointer;
+	color:#c8c8c8;
+	font-family:Arial;
+	font-size:15px;
+	padding:9px 18px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #263666;
+}
+.myButton:hover {
+	background:-moz-linear-gradient(top, #415989 5%, #2e466e 100%);
+	background:-webkit-linear-gradient(top, #415989 5%, #2e466e 100%);
+	background:-ms-linear-gradient(top, #415989 5%, #2e466e 100%);
+	background:linear-gradient(to bottom, #415989 5%, #2e466e 100%);
+	background-color:#415989;
+}
+table {
+  border-collapse: collapse;
+  width: 80%;
+  margin-bottom: 15px;
+}
+td {
+  height: 3em;
+  border: 2px solid black;
+  background: radial-gradient(circle farthest-corner, #555, #444);
+}
+.word {
+  animation: fade 0.7s;
+}
+@keyframes fade {
+  0%,100% { opacity: 1 }
+  50% { opacity: 0 }
+}
+
+    </style>
+  </head>
+  <body>
+    <div id="content">
+      <table>
+        <tr><td><span class="word" id="t0"></span></td></tr>
+        <tr><td><span class="word" id="t1"></span></td></tr>
+        <tr><td><span class="word" id="t2"></span></td></tr>
+        <tr><td><span class="word" id="t3"></span></td></tr>
+        <tr><td><span class="word" id="t4"></span></td></tr>
+      </table>
+      <button class="myButton" onclick="generate()">GENERATE MORE</button>
+    </div>
+  </body>
+</html>
