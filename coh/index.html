@@ -106,7 +106,7 @@ function parseFile(str) {
     } else if (reportType==2) {
       if (/scouts? attended/i.test(line)) {scout=true;continue}
       if (/adults? attended/i.test(line)) {scout=false;continue}
-      var rx = /(?:X|\d+)\s+((?:[a-z]+ ?)+), ((?: ?[a-z]+)+)/gi, m;
+      var rx = /(?:X|\d+)\s+((?:\S+ ?)+), ((?: ?\S+)+)/gi, m;
       while (m=rx.exec(line)){
         (scout?data.scouts:data.adults).push(m[1].trim()+","+m[2].trim());}
     } else {
