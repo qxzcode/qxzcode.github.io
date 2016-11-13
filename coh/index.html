@@ -87,7 +87,7 @@ function parseFile(str) {
       if (lline=="scout awards") {scout=true;continue}
       if (lline=="adult leader awards") {scout=false;continue}
       
-      var am = line.match(/([^*:]+?)\*?\s*:/);
+      var am = line.match(/([^*#:]+?)[*#]*\s*:/);
       if (am && awardType) {
         if (!data[awardType][award=am[1]])
           data[awardType][award] = [];
