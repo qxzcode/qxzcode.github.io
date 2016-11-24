@@ -10,14 +10,6 @@ canvas.style.height = height+"px";
 ctx.scale(ratio, ratio);
 
 
-function randCol([r, g, b], f = 0.1) {
-  const db = Math.random()*f*2 - f;
-  return [r+db, g+db, b+db];
-}
-function cssCol([r, g, b]) {
-  return "rgb("+Math.floor(r*255)+","+Math.floor(g*255)+","+Math.floor(b*255)+")";
-}
-
 var left, right, up, down;
 var fancy = true;
 document.body.addEventListener("keydown", function(e) {
@@ -112,29 +104,45 @@ for (let n=0; n<100; n++) {
       if (Math.abs(player.x-this.x)<14 && Math.abs(player.y-this.y)<14) {
         player.x = (Math.random()*0.8 + 0.1)*width;
         player.y = (Math.random()*0.8 + 0.1)*height;
+        for (var n=0; n<10; n++) {
+          particle(
+            this.x,this.y,
+            Math.random()*200-100+player.vx/2,Math.random()*200-100+player.vy/2,
+            cssCol(randCol([0,0,1])),
+            9, 0.8
+          );
+        }
       }
       
       particle(
         this.x,this.y,
         Math.random()*50-25,Math.random()*50-25,
         cssCol(randCol([1,0,0])),
-        3, 0.6
+        3, 0.3
       );
     }
   });
 }
 
-function particle(x,y,vx,vy,col,size,age,fade=true) {
+function randCol([r, g, b], f = 0.1) {
+  const db = Math.random()*f*2 - f;
+  return [r+db, g+db, b+db];
+}
+function cssCol([r, g, b]) {
+  return "rgb("+Math.floor(r*255)+","+Math.floor(g*255)+","+Math.floor(b*255)+")";
+}
+function particle(x0,y0,vx,vy,col,size,age,fade=true) {
+  var timer = age;
+  var x = x0, y = y0;
   particles.push({
-    x, y, vx, vy, col, size, timer:age,
     update(dt) {
-      this.x += this.vx*dt;
-      this.y += this.vy*dt;
-      ctx.fillStyle = this.col;
-      if (fade) ctx.globalAlpha = this.timer/age;
-      ctx.fillRect(this.x-this.size/2,this.y-this.size/2,this.size,this.size);
+      x += vx*dt;
+      y += vy*dt;
+      ctx.fillStyle = col;
+      if (fade) ctx.globalAlpha = timer/age;
+      ctx.fillRect(x-size/2,y-size/2,size,size);
       ctx.globalAlpha = 1; // restore globalAlpha
-      return (this.timer-=dt) <= 0;
+      return (timer-=dt) <= 0;
     }
   });
 }
@@ -156,7 +164,7 @@ function frame(time) {
   
   if ((shotTimer -= dt) <= 0) {
     autoShoot();
-    shotTimer = 0.4;
+    shotTimer = 0.2;
   }
   ctx.fillStyle = "#EEE";
   ctx.fillRect(0,0,width,height);
@@ -185,10 +193,10 @@ function autoShoot() {
 }
 function shoot(x, y, dx, dy) {
   bullets.unshift(bullets.pop().shoot(x,y,dx,dy));
-  for (let n=0; n<10; n++) {
+  for (let n=0; n<20; n++) {
     particle(
       x,y,
-      dx/4+Math.random()*50-25,dy/4+Math.random()*50-25,
+      dx/4+Math.random()*90-45,dy/4+Math.random()*90-45,
       cssCol(randCol([.5,.5,.5])),
       6, 0.6
     );
