@@ -52,10 +52,10 @@ var player = {
   update(dt) {
     const ACCEL = 1000;
     const SPEED = 200;
-    let ax = 0;
+    var ax = 0;
     if (left) ax -= ACCEL;
     if (right) ax += ACCEL;
-    let ay = 0;
+    var ay = 0;
     if (up) ay -= ACCEL;
     if (down) ay += ACCEL;
     if (ax!=0 && ay!=0) {
@@ -73,13 +73,6 @@ var player = {
     }
     this.x += this.vx*dt;
     this.y += this.vy*dt;
-    
-    // particle(
-    //   this.x,this.y,
-    //   Math.random()*50-25,Math.random()*50-25,
-    //   cssCol(randCol([0.7,0.7,0.7])),
-    //   8, 0.6
-    // );
   }
 };
 var turret = {x: width/2, y: height/2};
@@ -106,18 +99,18 @@ for (let n=0; n<100; n++) {
         player.y = (Math.random()*0.8 + 0.1)*height;
         for (var n=0; n<10; n++) {
           particle(
-            this.x,this.y,
-            Math.random()*200-100+player.vx/2,Math.random()*200-100+player.vy/2,
-            cssCol(randCol([0,0,1])),
+            this,
+            vSpread(100, player.vx/2, player.vy/2),
+            randCol([0,0,1]),
             9, 0.8
           );
         }
       }
       
       particle(
-        this.x,this.y,
-        Math.random()*50-25,Math.random()*50-25,
-        cssCol(randCol([1,0,0])),
+        this,
+        vSpread(25),
+        randCol([.7,0,0], 0.5),
         3, 0.3
       );
     }
@@ -126,14 +119,18 @@ for (let n=0; n<100; n++) {
 
 function randCol([r, g, b], f = 0.1) {
   const db = Math.random()*f*2 - f;
-  return [r+db, g+db, b+db];
+  return cssCol([r+db, g+db, b+db]);
 }
 function cssCol([r, g, b]) {
   return "rgb("+Math.floor(r*255)+","+Math.floor(g*255)+","+Math.floor(b*255)+")";
 }
-function particle(x0,y0,vx,vy,col,size,age,fade=true) {
+function vSpread(amt, xOff=0, yOff=0) {
+  return {vx:Math.random()*amt*2-amt+xOff, vy:Math.random()*amt*2-amt+yOff};
+}
+function particle(pos,vel,col,size,age,fade=true) {
   var timer = age;
-  var x = x0, y = y0;
+  var x = pos.x, y = pos.y;
+  var vx = vel.vx, vy = vel.vy;
   particles.push({
     update(dt) {
       x += vx*dt;
@@ -141,14 +138,14 @@ function particle(x0,y0,vx,vy,col,size,age,fade=true) {
       ctx.fillStyle = col;
       if (fade) ctx.globalAlpha = timer/age;
       ctx.fillRect(x-size/2,y-size/2,size,size);
-      ctx.globalAlpha = 1; // restore globalAlpha
+      // ctx.globalAlpha = 1; // restore globalAlpha
       return (timer-=dt) <= 0;
     }
   });
 }
 
 function updateList(array, dt) {
-  let i = array.length;
+  var i = array.length;
   while (i--) {
     if (array[i].update(dt))
       array.splice(i, 1);
@@ -195,9 +192,9 @@ function shoot(x, y, dx, dy) {
   bullets.unshift(bullets.pop().shoot(x,y,dx,dy));
   for (let n=0; n<20; n++) {
     particle(
-      x,y,
-      dx/4+Math.random()*90-45,dy/4+Math.random()*90-45,
-      cssCol(randCol([.5,.5,.5])),
+      {x,y},
+      vSpread(45, dx/4, dy/4),
+      randCol([.5,.5,.5]),
       6, 0.6
     );
   }
