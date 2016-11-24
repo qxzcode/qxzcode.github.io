@@ -75,6 +75,16 @@ var player = {
     this.y += this.vy*dt;
   }
 };
+function bloodDrop() {
+  console.log("bloodDrop");
+  particle(
+    player,
+    vSpread(0),
+    randCol([.7,0,0], 0.2),
+    5, 3.4
+  );
+  setTimer((Math.random()*2+0.3)*0.3, bloodDrop);
+}
 var turret = {x: width/2, y: height/2};
 var particles = [], bullets = [];
 for (let n=0; n<100; n++) {
@@ -97,11 +107,19 @@ for (let n=0; n<100; n++) {
       if (Math.abs(player.x-this.x)<14 && Math.abs(player.y-this.y)<14) {
         player.x = (Math.random()*0.8 + 0.1)*width;
         player.y = (Math.random()*0.8 + 0.1)*height;
-        for (var n=0; n<10; n++) {
+        for (var n=0; n<15; n++) {
           particle(
             this,
             vSpread(100, player.vx/2, player.vy/2),
-            randCol([0,0,1]),
+            randCol([.3,.3,.3]),
+            9, 0.8
+          );
+        }
+        for (var n=0; n<10; n++) {
+          particle(
+            this,
+            vSpread(75, player.vx/2, player.vy/2),
+            randCol([1,.1,0]),
             9, 0.8
           );
         }
@@ -109,7 +127,7 @@ for (let n=0; n<100; n++) {
       
       particle(
         this,
-        vSpread(25),
+        vSpread(50),
         randCol([.7,0,0], 0.5),
         3, 0.3
       );
@@ -124,8 +142,11 @@ function randCol([r, g, b], f = 0.1) {
 function cssCol([r, g, b]) {
   return "rgb("+Math.floor(r*255)+","+Math.floor(g*255)+","+Math.floor(b*255)+")";
 }
-function vSpread(amt, xOff=0, yOff=0) {
-  return {vx:Math.random()*amt*2-amt+xOff, vy:Math.random()*amt*2-amt+yOff};
+function vSpread(amt, xOff=0, yOff=0) { // generates a uniform vector within a circle of radius amt
+  var theta = Math.random()*Math.PI*2;
+  var u = Math.random()+Math.random();
+  var r = amt * (u>1? 2-u : u);
+  return {vx:Math.cos(theta)*r+xOff, vy:Math.sin(theta)*r+yOff};
 }
 function particle(pos,vel,col,size,age,fade=true) {
   var timer = age;
@@ -138,8 +159,21 @@ function particle(pos,vel,col,size,age,fade=true) {
       ctx.fillStyle = col;
       if (fade) ctx.globalAlpha = timer/age;
       ctx.fillRect(x-size/2,y-size/2,size,size);
-      // ctx.globalAlpha = 1; // restore globalAlpha
+      ctx.globalAlpha = 1; // restore globalAlpha
       return (timer-=dt) <= 0;
+    }
+  });
+}
+
+var timers = [];
+function setTimer(delay, callback) {
+  var end = gameTime + delay;
+  timers.push({
+    update() {
+      if (gameTime >= end) {
+        callback();
+        return true;
+      }
     }
   });
 }
@@ -153,9 +187,13 @@ function updateList(array, dt) {
 }
 
 var lastTime = 0, shotTimer = 0;
+var gameTime = 0;
+bloodDrop();
 function frame(time) {
   const dt = Math.min((time - lastTime)/1000, 1/30);
   lastTime = time;
+  gameTime += dt;
+  updateList(timers);
   
   player.update(dt);
   
