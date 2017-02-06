@@ -239,7 +239,7 @@ function onResize() {
   canvas.height = h * ratio;
   canvas.style.width = w+"px";
   canvas.style.height = h+"px";
-  gl.viewport(0,0, w,h);
+  gl.viewport(0,0, w*ratio,h*ratio);
   mat4.perspective(projection, fovy*Math.PI/180, w/h, 0.1, 1000.0);
   gl.uniformMatrix4fv(shader.projectionLoc, false, projection);
 }
