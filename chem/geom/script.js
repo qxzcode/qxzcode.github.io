@@ -125,15 +125,15 @@ function setSitesText() {
   setText("edgName",edgNames[sites-2]);
 }
 function touchStart(tx, ty, tid) {
-  if (ty>canvas.height*0.85) {
-    if (tx>canvas.width/2) bonds++;
+  if (ty>height*0.85) {
+    if (tx>width/2) bonds++;
     else bonds--;
     if (bonds<1) bonds=1;
     if (bonds>sites) bonds=sites;
     setBondsText();
-  } else if (ty<canvas.height*0.15) {
+  } else if (ty<height*0.15) {
     var d = sites-bonds;
-    if (tx>canvas.width/2) sites++;
+    if (tx>width/2) sites++;
     else sites--;
     if (sites<2) sites=2;
     if (sites>6) sites=6;
@@ -149,8 +149,8 @@ function touchStart(tx, ty, tid) {
 function touchMove(tx, ty, tid) {
   if (tid==camPanTouch) {
     var tmp = quat.create();
-    quat.rotateY(tmp,tmp,(tx-lastCTX)/canvas.height*45*0.1);
-    quat.rotateX(tmp,tmp,(ty-lastCTY)/canvas.height*45*0.1);
+    quat.rotateY(tmp,tmp,(tx-lastCTX)/height*45*0.1);
+    quat.rotateX(tmp,tmp,(ty-lastCTY)/height*45*0.1);
     quat.mul(camRot,tmp,camRot);
     lastCTX = tx;
     lastCTY = ty;
@@ -231,16 +231,17 @@ function createShaderProg(vSrc, fSrc) {
   return sh;
 }
 
+var width, height;
 function onResize() {
-  var w = window.innerWidth;
-  var h = window.innerHeight;
+  width = window.innerWidth;
+  height = window.innerHeight;
   var ratio = window.devicePixelRatio || 1;
-  canvas.width = w * ratio;
-  canvas.height = h * ratio;
-  canvas.style.width = w+"px";
-  canvas.style.height = h+"px";
-  gl.viewport(0,0, w*ratio,h*ratio);
-  mat4.perspective(projection, fovy*Math.PI/180, w/h, 0.1, 1000.0);
+  canvas.width = width * ratio;
+  canvas.height = height * ratio;
+  canvas.style.width = width+"px";
+  canvas.style.height = height+"px";
+  gl.viewport(0,0, width*ratio,h*ratio);
+  mat4.perspective(projection, fovy*Math.PI/180, width/height, 0.1, 1000.0);
   gl.uniformMatrix4fv(shader.projectionLoc, false, projection);
 }
 
@@ -383,7 +384,7 @@ function drawFrame(time) {try{
   var rdt = (time-lastTime)/1000, dt = rdt;
   if (dt>1/30) dt = 1/30;
   lastTime = time;
-  if(canvas.width!=window.innerWidth||canvas.height!=window.innerHeight)
+  if(width!=window.innerWidth || height!=window.innerHeight)
     onResize();
   
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
