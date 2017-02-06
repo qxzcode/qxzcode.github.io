@@ -17,14 +17,6 @@ function getE(id) {
 }
 window.addEventListener('load', function(e) {try{
   canvas = getE("c");
-  var ratio = window.devicePixelRatio || 1;
-  if (ratio != 1) {
-    var oldW = canvas.width, oldH = canvas.height;
-    canvas.width = oldW * ratio;
-    canvas.height = oldH * ratio;
-    canvas.style.width = oldW+"px";
-    canvas.style.height = oldH+"px";
-  }
   gl = canvas.getContext('experimental-webgl');
   initGL();
   initGame();
@@ -240,8 +232,13 @@ function createShaderProg(vSrc, fSrc) {
 }
 
 function onResize() {
-  var w = canvas.width = window.innerWidth;
-  var h = canvas.height = window.innerHeight;
+  var w = window.innerWidth;
+  var h = window.innerHeight;
+  var ratio = window.devicePixelRatio || 1;
+  canvas.width = w * ratio;
+  canvas.height = h * ratio;
+  canvas.style.width = w+"px";
+  canvas.style.height = h+"px";
   gl.viewport(0,0, w,h);
   mat4.perspective(projection, fovy*Math.PI/180, w/h, 0.1, 1000.0);
   gl.uniformMatrix4fv(shader.projectionLoc, false, projection);
