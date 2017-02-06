@@ -55,7 +55,7 @@ window.addEventListener('load', function(e) {try{
   }
   window.addEventListener("touchend", tEnd, false);
   window.addEventListener("touchcancel", tEnd, false);
-  document.body.style.fontSize = canvas.height+"px";
+  document.body.style.fontSize = window.innerHeight+"px";
   setSitesText();
   requestAnimationFrame(drawFrame);
 }catch(e){alert("onload: "+e.message)}}, false);
