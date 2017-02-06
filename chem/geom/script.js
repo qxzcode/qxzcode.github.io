@@ -17,6 +17,14 @@ function getE(id) {
 }
 window.addEventListener('load', function(e) {try{
   canvas = getE("c");
+  var ratio = window.devicePixelRatio || 1;
+  if (ratio != 1) {
+    var oldW = canvas.width, oldH = canvas.height;
+    canvas.width = oldW * ratio;
+    canvas.height = oldH * ratio;
+    canvas.style.width = oldW+"px";
+    canvas.style.height = oldH+"px";
+  }
   gl = canvas.getContext('experimental-webgl');
   initGL();
   initGame();
