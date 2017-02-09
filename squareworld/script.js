@@ -89,15 +89,22 @@ function bloodDrop() {
   );
   setTimer((Math.random() * 2 + 0.3) * 0.3, bloodDrop);
 }
+
 var turret = { 
   x: width / 2, y: height / 2,
+  vx: 0, vy: 0,
   mass: 220,
   update(dt) {
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
     // loop around
-    this.x = this.x % width;
-    this.y = this.y % width;
+    if (this.x < 0) this.x += width;
+    if (this.y < 0) this.y += height;
+    if (this.x > width) this.x = this.x % width;
+    if (this.y > height) this.y = this.y % height;
   }
 };
+
 var particles = [], bullets = [];
 for (let n = 0; n < 100; n++) {
   bullets.push({
@@ -152,15 +159,18 @@ function randCol([r, g, b], f = 0.1) {
   const db = Math.random() * f * 2 - f;
   return cssCol([r + db, g + db, b + db]);
 }
+
 function cssCol([r, g, b]) {
   return "rgb(" + Math.floor(r * 255) + "," + Math.floor(g * 255) + "," + Math.floor(b * 255) + ")";
 }
+
 function vSpread(amt, xOff = 0, yOff = 0) { // generates a uniform vector within a circle of radius amt
   var theta = Math.random() * Math.PI * 2;
   var u = Math.random() + Math.random();
   var r = amt * (u > 1 ? 2 - u : u);
   return { vx: Math.cos(theta) * r + xOff, vy: Math.sin(theta) * r + yOff };
 }
+
 function particle(pos, vel, col, size, age, fade = true) {
   var timer = age;
   var x = pos.x, y = pos.y;
@@ -241,7 +251,9 @@ function autoShoot() {
   );
 }
 function shoot(x, y, dx, dy) {
-  bullets.unshift(bullets.pop().shoot(x, y, dx, dy));
+  let b = bullets.pop();
+  b.shoot(x, y, dx, dy);
+  bullets.unshift(b);
   for (let n = 0; n < 20; n++) {
     particle(
       { x, y },
@@ -250,6 +262,11 @@ function shoot(x, y, dx, dy) {
       6, 0.6
     );
   }
+  let bsp = Math.hypot(dx, dy);
+  let recoilSp = (b.mass * bsp) / turret.mass; // recoil speed
+  let bm = { dx: dx  * recoilSp / bsp, dy: dy * recoilSp / bsp}; // recoil vector
+  turret.vx -= bm.dx;
+  turret.vy -= bm.dy;
 }
 function calcAutoShoot(dx, dy, vx, vy, v) {
   function rot(x, y) {
