@@ -10,7 +10,6 @@ canvas.style.width = width + "px";
 canvas.style.height = height + "px";
 ctx.scale(ratio, ratio);
 
-
 var left, right, up, down;
 var fancy = true;
 document.body.addEventListener("keydown", function (e) {
@@ -90,12 +89,21 @@ function bloodDrop() {
   );
   setTimer((Math.random() * 2 + 0.3) * 0.3, bloodDrop);
 }
-var turret = { x: width / 2, y: height / 2 };
+var turret = { 
+  x: width / 2, y: height / 2,
+  mass: 220,
+  update(dt) {
+    // loop around
+    this.x = this.x % width;
+    this.y = this.y % width;
+  }
+};
 var particles = [], bullets = [];
 for (let n = 0; n < 100; n++) {
   bullets.push({
     x: -9001, y: -9001,
     vx: 0, vy: 0,
+    mass: 2,
     shoot(x, y, vx, vy) {
       this.x = x;
       this.y = y;
@@ -201,6 +209,7 @@ function frame(time) {
   updateList(timers);
 
   player.update(dt);
+  turret.update(dt);
 
   if ((shotTimer -= dt) <= 0) {
     autoShoot();
