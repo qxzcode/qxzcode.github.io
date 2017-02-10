@@ -105,11 +105,9 @@ for (let n=0; n<100; n++) {
       ctx.fillRect(this.x-4,this.y-4,8,8);
       
       if (Math.abs(player.x-this.x)<14 && Math.abs(player.y-this.y)<14) {
-        player.x = (Math.random()*0.8 + 0.1)*width;
-        player.y = (Math.random()*0.8 + 0.1)*height;
         for (var n=0; n<15; n++) {
           particle(
-            this,
+            player,
             vSpread(100, player.vx/2, player.vy/2),
             randCol([.3,.3,.3]),
             9, 0.8
@@ -117,12 +115,15 @@ for (let n=0; n<100; n++) {
         }
         for (var n=0; n<10; n++) {
           particle(
-            this,
+            player,
             vSpread(75, player.vx/2, player.vy/2),
             randCol([1,.1,0]),
             9, 0.8
           );
         }
+        player.x = (Math.random()*0.8 + 0.1)*width;
+        player.y = (Math.random()*0.8 + 0.1)*height;
+        player.vx = player.vy = 0;
       }
       
       particle(
