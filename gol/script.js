@@ -8,11 +8,43 @@ window.addEventListener("load", function(e) {
   requestAnimationFrame(frame);
 });
 
+window.addEventListener("keydown", function(e) {
+  var key = e.keyCode;
+  console.log(key);
+  if (key == 32) {
+    if (playing = !playing)
+      startSim();
+    else
+      stopSim();
+  }
+  if (key == 190) {
+    step();
+  }
+  const CHANGE_RATE = 1.3;
+  if (key == 189) {
+    tps /= CHANGE_RATE;
+    stopSim();
+    startSim();
+  }
+  if (key == 187) {
+    tps *= CHANGE_RATE;
+    stopSim();
+    startSim();
+  }
+});
+function startSim() {
+  intID = setInterval(step, 1000/tps);
+}
+function stopSim() {
+  clearInterval(intID);
+}
+
 var TILE_SIZE = 10;
 
 var grid1 = [], grid2 = [];
 var gridW, gridH, arrSize;
 var imgData, imgDataArr;
+var intID, playing=true, tps=30;
 
 function init(width, height) {
   canvas.width = gridW = Math.floor(width/TILE_SIZE);
@@ -26,6 +58,8 @@ function init(width, height) {
   for (var i = 0; i < arrSize; i++) {
     grid1[i] = Math.random() < 0.5;
   }
+  
+  startSim();
 }
 
 function frame() {
@@ -37,9 +71,6 @@ function frame() {
     imgDataArr[di+2] = val;
   }
   ctx.putImageData(imgData, 0, 0);
-  
-  // step the simulation
-    step();
   
   // next frame
   requestAnimationFrame(frame);
