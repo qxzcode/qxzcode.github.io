@@ -25,7 +25,7 @@ function touchStart(event) {
     event.preventDefault();
     var touches = event.changedTouches;
     for (var i=0; i<touches.length; i++) {
-        var tx = touches[i].pageX, ty = touches[i].pageY;
+        var tx=touches[i].pageX, ty=touches[i].pageY, id=touches[i].identifier;
         if (gameState==0) {
             var mapH = winHeight-250, mapW = mapH*bgImg.width/bgImg.height;
             if (tx>winWidth/2-mapW/2&&tx<winWidth/2+mapW/2&&ty>winHeight/2-mapH/2&&ty<winHeight/2+mapH/2) {
@@ -45,7 +45,6 @@ function touchStart(event) {
             }
             setCookie("sh_currentMap",currentMap);
         } else if (gameState == 1) {
-            var tx=touches[i].pageX, ty=touches[i].pageY, id=touches[i].identifier;
             var player, b;
             if (coOp) {
                 if (tx<window.innerWidth/2) {
@@ -135,7 +134,7 @@ var moveJoystick2 = newJoystick();
 var shootJoystick2 = newJoystick();
 function newJoystick() {
     return {
-        x:0,y:0,size:0,touchID:0,xVal:0,yVal:0,
+        x:0,y:0, size:0, touchID:null, xVal:0,yVal:0,
         touchStart:function(tx,ty,id) {
             if (tx>this.x-this.size&&tx<this.x+this.size&&ty>this.y-this.size&&ty<this.y+this.size) {
                 this.touchID = id;
@@ -145,26 +144,28 @@ function newJoystick() {
             return false;
         },
         touchMove:function(tx,ty,id) {
-            if (id==this.touchID) {
-                var x = tx-this.x, y = ty-this.y;
+            if (id===this.touchID) {
+                var x = this.xVal = (tx-this.x)/this.size;
+                var y = this.yVal = (ty-this.y)/this.size;
                 var mag = sqrt(x*x + y*y);
-                if (mag != 0) {
-                    this.xVal = x/mag;
-                    this.yVal = y/mag;
+                if (mag > 1.0) {
+                    this.xVal /= mag;
+                    this.yVal /= mag;
                 }
             }
         },
         touchEnd:function(tx,ty,id) {
-            if (id==this.touchID) {
+            if (id===this.touchID) {
                 this.xVal = this.yVal = 0;
+                this.touchID = null;
             }
         },
         draw:function() {
             var size=this.size,halfSize=size/2;
-            drawCircle(this.x, this.y, size, size, "rgba(191,191,191,0.5)");
-            drawCircle(this.x+this.xVal*halfSize,this.y+this.yVal*halfSize,halfSize,halfSize,"rgba(255,255,255,0.5)");
+            drawCircle(this.x, this.y, size, "rgba(191,191,191,0.5)");
+            drawCircle(this.x+this.xVal*halfSize, this.y+this.yVal*halfSize, halfSize, "rgba(255,255,255,0.5)");
         }
-        };
+    };
 }
 
 
@@ -923,10 +924,10 @@ function drawBg(buf) {
                 var t = floor(tiles[x][y]);
                 if (t>0&&t!=3&&t<10) drawRect(xPos,yPos, tileSize,tileSize, t==1?"white":t==2?"purple":t==4?"brown":"orange",ctx);
                 if (t>=100) {tiles[x][y]=0;continue;}
-                if (t==3||t>9) drawCircle(xPos+20,yPos+20,17,17,t==3?"tan":"white",ctx);
-                if (t>32) drawCircle(xPos+17,yPos+28,3,3,"#DEB887",ctx);
-                if (t>54) drawCircle(xPos+21,yPos+10,3,3,"#DEB887",ctx);
-                if (t>76) drawCircle(xPos+28,yPos+23,3,3,"#DEB887",ctx);
+                if (t==3||t>9) drawCircle(xPos+20,yPos+20,17,t==3?"tan":"white",ctx);
+                if (t>32) drawCircle(xPos+17,yPos+28,3,"#DEB887",ctx);
+                if (t>54) drawCircle(xPos+21,yPos+10,3,"#DEB887",ctx);
+                if (t>76) drawCircle(xPos+28,yPos+23,3,"#DEB887",ctx);
             }
         }
     },buf);
@@ -958,7 +959,7 @@ function frame() {try{
     }
     if (gameState==1) {
         // update game
-        var tmp_barrels = barrels.slice(0);
+        var tmp_barrels = barrels;
         barrels = [];
         for (var i=0;i<tmp_barrels.length;i++) {
             var b = tmp_barrels[i];
@@ -1067,7 +1068,7 @@ function frame() {try{
                 entities[i].draw(offsetX,offsetY);
             for (var i=0;i<explosions.length;i++) {
                 var e = explosions[i];var s=e.s*tileSize;
-                drawCircle(e.x*tileSize+offsetX,e.y*tileSize+offsetY,s,s,"white");
+                drawCircle(e.x*tileSize+offsetX,e.y*tileSize+offsetY,s,"white");
             }
             // HUD/controls
             if (p1) {
@@ -1098,7 +1099,8 @@ function frame() {try{
     }
     
     // request the next frame
-    requestAnimationFrame(frame);
+    // requestAnimationFrame(frame);
+    setTimeout(frame, 25);
 }catch(e){
     document.body.innerHTML = `<pre>
 
