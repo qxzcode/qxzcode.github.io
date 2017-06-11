@@ -1,14 +1,13 @@
-/* Squarehead */
+//// Squarehead ////
 
 
-/* create the document, canvas, and rendering context */
+// set up the canvas and rendering context
 var canvas = document.querySelector("canvas");
 var ctx = canvas.getContext("2d");
 
 var winWidth, winHeight;
 setWH();
 function setWH() {
-    window.scrollTo(0, 0);
     winWidth = window.innerWidth;
     winHeight = window.innerHeight;
     var ratio = window.devicePixelRatio || 1;
@@ -18,14 +17,14 @@ function setWH() {
     ctx.scale(ratio, ratio);
 }
 
-/* input events */
+// input events
 canvas.addEventListener("touchstart", touchStart, false);
 canvas.addEventListener("touchmove", touchMove, false);
 canvas.addEventListener("touchend", touchEnd, false);
 function touchStart(event) {
     event.preventDefault();
     var touches = event.changedTouches;
-    for (var i=0;i<touches.length;i++) {
+    for (var i=0; i<touches.length; i++) {
         var tx = touches[i].pageX, ty = touches[i].pageY;
         if (gameState==0) {
             var mapH = winHeight-250, mapW = mapH*bgImg.width/bgImg.height;
@@ -40,13 +39,13 @@ function touchStart(event) {
                     currentMap = 0;
                 redraw = true;
             } else {
-                if (currentMap--==0)
+                if (currentMap-- == 0)
                     currentMap = maps.length-1;
                 redraw = true;
             }
-            setCookie("sh_currentMap",currentMap+"");
-        } else if (gameState==1) {
-            var tx=touches[i].pageX,ty=touches[i].pageY,id=touches[i].identifier;
+            setCookie("sh_currentMap",currentMap);
+        } else if (gameState == 1) {
+            var tx=touches[i].pageX, ty=touches[i].pageY, id=touches[i].identifier;
             var player, b;
             if (coOp) {
                 if (tx<window.innerWidth/2) {
@@ -168,12 +167,6 @@ function newJoystick() {
         };
 }
 
-/* drawing utility functions */
-function drawCircle(x,y,w,h,color,ct){ct=ct||ctx;ct.fillStyle=color;ct.beginPath();ct.arc(x,y,w,h, -9,9);ct.fill();}function drawRect(x,y,w,h,color,ct){ct=ct||ctx;ct.fillStyle=color;ct.fillRect(x,y,w,h);}function drawLine(x1,y1,x2,y2,color,ct){ct=ct||ctx;ct.strokeStyle=color;ct.beginPath();ct.moveTo(x1,y1);ct.lineTo(x2,y2);ct.stroke();}function drawText(text,x,y,ct){ct=ct||ctx;ct.textAlign="center";ct.textBaseline="middle";ct.font=floor(winHeight/18)+"px Arial";ct.fillStyle=document.body.style.color;ct.fillText(text,x,y);}function clearCanvas(ct){ct=ct||ctx;ct.fillStyle=document.body.style.backgroundColor;ct.fillRect(0,0,ct.canvas.width,ct.canvas.height);}function renderToBuffer(w,h,func,b){b=b||document.createElement('canvas');b.width=w;b.height=h;func(b.getContext('2d'));return b;}function drawImage(img,x,y,ct){ct=ct||ctx;ct.drawImage(img,x,y);}
-
-/* cookie handling */
-function setCookie(name,value){if(location.protocol=="data:")return;var b=new Date;b.setTime(b.getTime()+31536E6);document.cookie=name+"="+value+"; "+"expires="+b.toGMTString()}function getCookie(name){if(location.protocol=="data:")return null;var a=name+"=";for(var d=document.cookie.split(";"),b=0;b<d.length;b++){var c=d[b].trim();if(0==c.indexOf(a))return c.substring(a.length,c.length)}return null}
-
 
 /**** VARIABLES ****/
 
@@ -188,7 +181,7 @@ function initTiles(mapI) {
     zombieGrid = [];
     portals = [];
     ammoDrops = [];
-    var playersPos = [{x:gridWidth/2,y:gridHeight/2},{x:gridWidth/2+1,y:gridHeight/2+1}];
+    var playersPos = [{x:gridWidth/2,y:gridHeight/2}, {x:gridWidth/2+1,y:gridHeight/2+1}];
     for (var x=0;x<gridWidth;x++) {
         zombieGrid[x] = [];
         tiles[x] = map[x].slice(0);
@@ -218,9 +211,6 @@ function setTile(x,y,t) {
     tiles[x][y] = t;
     tilesChanged = true;
 }
-
-/* pathfinding */
-function astar(n,m,q,r){function w(g){var h=[],k=g.x;g=g.y;var e=!1,b=!1,c=!1,f=!1,a;d[k-1]&&(a=d[k-1][g])&&!a.isWall&&(b=!0,a.cost=1+a.z,h.push(a));d[k+1]&&(a=d[k+1][g])&&!a.isWall&&(e=!0,a.cost=1+a.z,h.push(a));d[k]&&(a=d[k][g-1])&&!a.isWall&&(f=!0,a.cost=1+a.z,h.push(a));d[k]&&(a=d[k][g+1])&&!a.isWall&&(c=!0,a.cost=1+a.z,h.push(a));d[k-1]&&(a=d[k-1][g-1])&&!a.isWall&&b&&f&&(a.cost=1.4+a.z,h.push(a));d[k+1]&&(a=d[k+1][g-1])&&!a.isWall&&e&&f&&(a.cost=1.4+a.z,h.push(a));d[k-1]&&(a=d[k-1][g+1])&&!a.isWall&&b&&c&&(a.cost=1.4+a.z,h.push(a));d[k+1]&&(a=d[k+1][g+1])&&!a.isWall&&e&&c&&(a.cost=1.4+a.z,h.push(a));return h}function x(){var g=e[0],h=e.pop();if(0<e.length){e[0]=h;for(var h=0,b=e.length,c=e[h],d=c.f;;){var f=h+1<<1,l=f-1,a=null,m;l<b&&(m=e[l].f,m<d&&(a=l));f<b&&e[f].f<(null==a?d:m)&&(a=f);if(null!=a)e[h]=e[a],e[a]=c,h=a;else break}}return g}function p(g){for(var b=e[g];0<g;){var c=(g+1>>1)-1,d=e[c];if(b.f<d.f)e[c]=b,e[g]=d,g=c;else break}}function s(b,c,d,e){var f=sqrt(2);b=abs(d-b);c=abs(e-c);return 1*(b+c)+(f-2)*Math.min(b,c)}function t(b){for(var c=[];b.parent;)c.push(b),b=b.parent;return c.reverse()}for(var d=[],b=0;b<gridWidth;b++){d[b]=[];for(var f=0;f<gridHeight;f++){var l=tiles[b][f];d[b][f]={x:b,y:f,isWall:0!=l&&2!=l&&4!=l&&5!=l,f:0,g:0,h:0,z:0==zombieGrid[b][f]?0:2,visited:!1,closed:!1,parent:null}}}var e=[],b=d[n][m];n=d[q][r];m=b;b.h=s(b.x,b.y,n.x,n.y);e.push(b);for(p(e.length-1);0<e.length;){b=x();if(b.x==q&&b.y==r)return t(b);b.closed=!0;for(var f=w(b),l=0,y=f.length;l<y;l++){var c=f[l];if(!c.closed){var u=b.g+c.cost,v=c.visited;if(!v||u<c.g){c.visited=!0;c.parent=b;c.h=c.h||s(c.x,c.y,n.x,n.y);c.g=u;c.f=c.g+c.h;if(c.h<m.h||c.h==m.h&&c.g<m.g)m=c;v?p(e.indexOf(c)):(e.push(c),p(e.length-1))}}}}return t(m)}
 
 var enemies;
 var round, zombieTotal, zombiesLeft, zombieTimer, zombieRate;
@@ -478,7 +468,7 @@ function initWeapons() {
                         if (this.timer<-1 && --this.timer==-30) {
                             this.timer = -1;
                         }
-                        if (this.timer==-1&&(isCollidingEnemies(this)||isCollidingPlayers(this))) {
+                        if (this.timer==-1 && (isCollidingEnemies(this)||isCollidingPlayers(this))) {
                             this.timer = 40;
                         }
                         if (this.timer>-1 && --this.timer==0) {
@@ -570,51 +560,51 @@ function initWeapons() {
     ];
 }
 function doUpgrades(player) {
-    /* pistol */
+    // pistol
     if(player.maxCombo>=3)player.weapons[0].rate=12;
     if(player.maxCombo>=12)player.weapons[0].damage=34;
-    /* UZI */
+    // UZI
     if(player.maxCombo>=4)player.weapons[1].unlocked=true;
     if(player.maxCombo>=7)player.weapons[1].rate=2.5;
     if(player.maxCombo>=13)player.weapons[1].maxAmmo=200;
     if(player.maxCombo>=24)player.weapons[1].range=16;
-    /* shotgun */
+    // shotgun
     if(player.maxCombo>=10)player.weapons[2].unlocked=true;
     if(player.maxCombo>=17)player.weapons[2].maxAmmo=60;
     if(player.maxCombo>=21)player.weapons[2].range=10;
     if(player.maxCombo>=29)player.weapons[2].rate=15;
-    /* grenade */
+    // grenade
     if(player.maxCombo>=19)player.weapons[3].unlocked=true;
     if(player.maxCombo>=25)player.weapons[3].maxAmmo=20;
     if(player.maxCombo>=34)player.weapons[3].cluster=true;
-    /* wall */
+    // wall
     if(player.maxCombo>=30)player.weapons[4].unlocked=true;
     if(player.maxCombo>=35)player.weapons[4].rate=5;
     if(player.maxCombo>=40)player.weapons[4].maxAmmo=40;
-    /* barrel */
+    // barrel
     if(player.maxCombo>=41)player.weapons[5].unlocked=true;
     if(player.maxCombo>=46)player.weapons[5].rate=5;
     if(player.maxCombo>=51)player.weapons[5].maxAmmo=40;
     if(player.maxCombo>=58)player.weapons[5].bigbang=true;
     if(player.maxCombo>=67)player.weapons[5].cluster=true;
-    /* gasoline */
+    // gasoline
     if(player.maxCombo>=45)player.weapons[6].unlocked=true;
     if(player.maxCombo>=50)player.weapons[6].rate=5;
     if(player.maxCombo>=56)player.weapons[6].maxAmmo=40;
     if(player.maxCombo>=63)player.weapons[6].burntime=480;
     if(player.maxCombo>=70)player.weapons[6].damage=1;
-    /* mine */
+    // mine
     if(player.maxCombo>=53)player.weapons[7].unlocked=true;
     if(player.maxCombo>=67)player.weapons[7].maxAmmo=40;
     if(player.maxCombo>=97)player.weapons[7].bigbang=true;
     if(player.maxCombo>=100)player.weapons[7].cluster=true;
-    /* rocket */
+    // rocket
     if(player.maxCombo>=61)player.weapons[8].unlocked=true;
     if(player.maxCombo>=80)player.weapons[8].rate=10;
     if(player.maxCombo>=89	)player.weapons[8].maxAmmo=40;
     if(player.maxCombo>=98)player.weapons[8].bigbang=true;
     if(player.maxCombo>=115)player.weapons[8].cluster=true;
-    /* flamethrower */
+    // flamethrower
     if(player.maxCombo>=85)player.weapons[9].unlocked=true;
     if(player.maxCombo>=99)player.weapons[9].maxAmmo=200;
     if(player.maxCombo>=110)player.weapons[9].rate=4;
@@ -907,7 +897,7 @@ function remove(arr,item) {
     arr.splice(arr.indexOf(item),1);
 }
 
-/* start the main loop! */
+// start the main loop!
 function initGame(mapI) {
     var playersPos=initTiles(mapI);
     initGameVars();
@@ -941,14 +931,13 @@ function drawBg(buf) {
         }
     },buf);
 }
-var gameState = 0, currentMap = getCookie("sh_currentMap")||0, redraw = true;
-currentMap *= 1;
+var gameState = 0, currentMap = +getCookie("sh_currentMap")||0, redraw = true;
 frame();
 
-/* main everything function - called every frame */
+// main everything function - called every frame
 function frame() {try{
     
-    /* draw/update stuff */
+    // draw/update stuff
     if (gameState==0 && redraw) {
         clearCanvas();
         drawText("Level Select",winWidth/2,winHeight/12);
@@ -968,7 +957,7 @@ function frame() {try{
         redraw = true;
     }
     if (gameState==1) {
-        /* update game */
+        // update game
         var tmp_barrels = barrels.slice(0);
         barrels = [];
         for (var i=0;i<tmp_barrels.length;i++) {
@@ -1037,7 +1026,7 @@ function frame() {try{
             if (player2.combo<1) player2.combo=0.1;
         }
         
-        /* draw scene */
+        // draw scene
         var p1 = false;
         do {
             p1 = !p1;
@@ -1080,7 +1069,7 @@ function frame() {try{
                 var e = explosions[i];var s=e.s*tileSize;
                 drawCircle(e.x*tileSize+offsetX,e.y*tileSize+offsetY,s,s,"white");
             }
-            /* HUD/controls */
+            // HUD/controls
             if (p1) {
                 moveJoystick1.draw();
                 shootJoystick1.draw();
@@ -1108,8 +1097,12 @@ function frame() {try{
             drawRect(winWidth/2-5,0,10,winHeight);
     }
     
-    /* call frame() again in 25 milliseconds */
-    setTimeout("frame()", 25);window.scrollTo(0, 0);
-}catch(e){document.body.innerHTML="<pre>\n\nSquarehead has crashed! Please report the following message to Quinn (I cannot fix this if you just say \"it crashed\"):\n\n"+e.message+"</pre>";}}
-/* function exports for Google's JS compression */
-window['frame'] = frame;
+    // request the next frame
+    requestAnimationFrame(frame);
+}catch(e){
+    document.body.innerHTML = `<pre>
+
+Squarehead has crashed! Please report the following message to Quinn (I cannot fix this if you just say "it crashed"):
+
+${e.message}</pre>`;
+}}
