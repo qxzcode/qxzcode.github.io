@@ -1,12 +1,21 @@
 window.addEventListener('load', function(e) {
-  msg = prompt("Enter auth code:");
+  try {
+    var url = location.href;
+    msg = atob(url.slice(url.indexOf("?")+1));
+    auto = true;
+    setTimeout(start, 1000+rand(3000));
+  } catch (e) {
+    msg = prompt("Enter auth code:");
+  }
 }, false);
 
 window.addEventListener('touchstart', function(e) {
+  if (auto) return;
   e.preventDefault();
   start();
 }, false);
 window.addEventListener('click', function(e) {
+  if (auto) return;
   e.preventDefault();
   start();
 }, false);
@@ -27,7 +36,7 @@ function initArr() {
     arr.push(i);
 }
 
-var msg;
+var msg, auto = false;
 var arr = [];
 var phase = 0;
 var ticks = 0;
