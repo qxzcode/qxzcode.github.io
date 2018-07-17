@@ -159,4 +159,4 @@ function drawLine(x1, y1, x2, y2) {
     ctx.stroke();
 }
 
-window.interval = setInterval(frame/*, 10*STEP*/);
+window.interval = setInterval(frame, 1/*, 10*STEP*/);
