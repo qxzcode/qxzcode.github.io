@@ -18,10 +18,14 @@ function getQueryParameter(name) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
+canvas.style.width = window.innerWidth+"px";
+canvas.style.height = window.innerHeight+"px";
+
 const ZOOM = +getQueryParameter("zoom") || 1.0;
-const WIDTH = (canvas.width = window.innerWidth) / ZOOM;
-const HEIGHT = (canvas.height = window.innerHeight) / ZOOM;
-ctx.scale(ZOOM, ZOOM);
+const PX_RATIO = window.devicePixelRatio || 1;
+const WIDTH = (canvas.width = window.innerWidth*PX_RATIO) / ZOOM;
+const HEIGHT = (canvas.height = window.innerHeight*PX_RATIO) / ZOOM;
+ctx.scale(ZOOM*PX_RATIO, ZOOM*PX_RATIO);
 
 
 const STEP = 5; // pixels
