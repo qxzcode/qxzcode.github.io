@@ -117,6 +117,7 @@ function forEachNearbyNode(p, callback) {
 }
 
 const HUE_PER_PX = 0.4;
+const FADE_PER_PX = 0.997;
 const EFFECTS = {
     "plain": {
         init: () => 0,
@@ -125,6 +126,10 @@ const EFFECTS = {
     "rainbow": {
         init: () => Math.random()*360/HUE_PER_PX,
         color: s => `hsl(${Math.floor(HUE_PER_PX * s)}, 100%, 50%)`
+    },
+    "fade": {
+        init: () => 0,
+        color: s => `hsl(0, 0%, ${100*Math.pow(FADE_PER_PX, s)}%)`
     }
 };
 
