@@ -1,12 +1,14 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
 
-window.addEventListener("click", event => {
+function stop() {
     clearInterval(window.interval);
-});
+}
+window.addEventListener("click", stop);
+window.addEventListener("touchend", stop);
 
 // https://stackoverflow.com/a/901144/1848578
-function getParameterByName(name) {
+function getQueryParameter(name) {
     const url = window.location.href;
     name = name.replace(/[\[\]]/g, '\\$&');
     var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
@@ -16,7 +18,7 @@ function getParameterByName(name) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
-const ZOOM = +getParameterByName("zoom") || 1.0;
+const ZOOM = +getQueryParameter("zoom") || 1.0;
 const WIDTH = (canvas.width = window.innerWidth) / ZOOM;
 const HEIGHT = (canvas.height = window.innerHeight) / ZOOM;
 ctx.scale(ZOOM, ZOOM);
@@ -31,8 +33,6 @@ const SPLIT_SPREAD = 0.5;
 let nodes = [], activeNodes = [];
 
 function addNode(x, y, vx, vy, auxList, parent = null) {
-    // if (nodes.length > 50000) { clearInterval(window.interval); throw "stop"; }
-    
     const n = {x, y, vx, vy, parent};
     nodes.push(n);
     auxList.push(n);
@@ -159,4 +159,4 @@ function drawLine(x1, y1, x2, y2) {
     ctx.stroke();
 }
 
-window.interval = setInterval(frame, 1/*, 10*STEP*/);
+window.interval = setInterval(frame, 10*STEP / (+getQueryParameter("speed") || 1.0));
