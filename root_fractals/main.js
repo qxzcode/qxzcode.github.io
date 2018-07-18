@@ -116,10 +116,14 @@ function forEachNearbyNode(p, callback) {
 }
 
 
-addNode(WIDTH/2, HEIGHT/2, 0, -1, activeNodes);
-
-ctx.fillStyle = "black";
-ctx.fillRect(0, 0, WIDTH, HEIGHT);
+// initialize
+{
+    const angle = Math.random() * 2*Math.PI;
+    addNode(WIDTH/2, HEIGHT/2, Math.cos(angle), Math.sin(angle), activeNodes);
+    
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+}
 
 function frame() {
     const start = performance.now();
