@@ -31,6 +31,7 @@ const HEIGHT = (window.innerHeight) / ZOOM;
 ctx.scale(ZOOM*PX_RATIO, ZOOM*PX_RATIO);
 
 
+// growth/shape parameters
 const STEP = 5; // pixels
 const NOISE_AMT = 0.3;
 const SPLIT_RATE = 0.035; // probability density per pixel of length
@@ -115,6 +116,20 @@ function forEachNearbyNode(p, callback) {
     }
 }
 
+const HUE_PER_PX = 0.4;
+const EFFECTS = {
+    "plain": {
+        init: () => 0,
+        color: s => "white"
+    },
+    "rainbow": {
+        init: () => Math.random()*360/HUE_PER_PX,
+        color: s => `hsl(${Math.floor(HUE_PER_PX * s)}, 100%, 50%)`
+    }
+};
+
+let effect = EFFECTS[getQueryParameter("effect")] || EFFECTS["plain"];
+
 
 // initialize
 {
@@ -125,11 +140,13 @@ function forEachNearbyNode(p, callback) {
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 }
 
+let s = effect.init();
 function frame() {
     const start = performance.now();
     
     /// draw
-    ctx.fillStyle = ctx.strokeStyle = "white";
+    s += STEP;
+    ctx.fillStyle = ctx.strokeStyle = effect.color(s);
     for (const n of activeNodes) {
         // fillCircle(n.x, n.y, 2);
         if (n.parent)
