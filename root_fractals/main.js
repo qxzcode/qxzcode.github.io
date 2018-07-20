@@ -30,10 +30,13 @@ const WIDTH = (window.innerWidth) / ZOOM;
 const HEIGHT = (window.innerHeight) / ZOOM;
 ctx.scale(ZOOM*PX_RATIO, ZOOM*PX_RATIO);
 
+ctx.lineCap = ctx.lineJoin = "round";
+ctx.lineWidth = +getQueryParameter("lineWidth") || 1;
+
 
 // growth/shape parameters
-const STEP = 5; // pixels
-const NOISE_AMT = 0.3;
+const STEP = +getQueryParameter("step") || 5; // pixels
+const NOISE_AMT = 0.06 * STEP;
 const SPLIT_RATE = 0.035; // probability density per pixel of length
 const SPLIT_CHANCE = 1 - Math.pow(1 - SPLIT_RATE, STEP); // probability per node
 const SPLIT_SPREAD = 0.5;
@@ -133,7 +136,7 @@ const EFFECTS = {
     }
 };
 
-let effect = EFFECTS[getQueryParameter("effect")] || EFFECTS["plain"];
+const effect = EFFECTS[getQueryParameter("effect")] || EFFECTS["plain"];
 
 
 // initialize
